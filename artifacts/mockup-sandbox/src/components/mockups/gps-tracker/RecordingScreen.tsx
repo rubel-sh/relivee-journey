@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { MapContainer, TileLayer, Polyline, CircleMarker, useMap } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 import {
   Square,
   Pause,
@@ -7,7 +9,6 @@ import {
   User,
   History,
   BarChart2,
-  Clock,
   MapPin,
   Zap,
   Navigation,
@@ -25,50 +26,43 @@ const COLORS = {
   accent: "#088395",
 };
 
-function GPSPath() {
-  return (
-    <svg viewBox="0 0 340 220" className="w-full h-full" preserveAspectRatio="xMidYMid slice">
-      {/* Background map tiles */}
-      <rect width="340" height="220" fill="#D8E4D0" />
-      {/* Streets */}
-      <line x1="0" y1="55" x2="340" y2="55" stroke="white" strokeWidth="6" opacity="0.5" />
-      <line x1="0" y1="110" x2="340" y2="110" stroke="white" strokeWidth="4" opacity="0.4" />
-      <line x1="0" y1="170" x2="340" y2="170" stroke="white" strokeWidth="6" opacity="0.5" />
-      <line x1="60" y1="0" x2="60" y2="220" stroke="white" strokeWidth="4" opacity="0.4" />
-      <line x1="150" y1="0" x2="150" y2="220" stroke="white" strokeWidth="6" opacity="0.5" />
-      <line x1="250" y1="0" x2="250" y2="220" stroke="white" strokeWidth="4" opacity="0.4" />
-      {/* Green zones */}
-      <ellipse cx="200" cy="80" rx="40" ry="30" fill="#B8D4A0" opacity="0.6" />
-      <ellipse cx="90" cy="160" rx="30" ry="20" fill="#B8D4A0" opacity="0.5" />
-      {/* GPS Trace */}
-      <defs>
-        <linearGradient id="traceGrad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#982598" stopOpacity="0.4" />
-          <stop offset="100%" stopColor="#982598" stopOpacity="1" />
-        </linearGradient>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="2" result="blur" />
-          <feComposite in="SourceGraphic" in2="blur" operator="over" />
-        </filter>
-      </defs>
-      <path
-        d="M30,180 C50,165 65,155 80,145 C95,135 110,130 120,118 C130,106 135,95 148,88 C161,81 175,82 185,75 C195,68 200,55 215,50 C230,45 245,50 258,42 C271,34 282,28 300,32"
-        stroke="url(#traceGrad)"
-        strokeWidth="4"
-        fill="none"
-        strokeLinecap="round"
-        filter="url(#glow)"
-      />
-      {/* Start dot */}
-      <circle cx="30" cy="180" r="6" fill={COLORS.primary} stroke="white" strokeWidth="2" />
-      {/* Current position animated pulse */}
-      <circle cx="300" cy="32" r="14" fill={COLORS.trace} opacity="0.2" />
-      <circle cx="300" cy="32" r="9" fill={COLORS.trace} opacity="0.3" />
-      <circle cx="300" cy="32" r="6" fill={COLORS.trace} stroke="white" strokeWidth="2" />
-      {/* Navigation arrow */}
-      <polygon points="300,22 306,36 300,32 294,36" fill={COLORS.accent} />
-    </svg>
-  );
+const GPS_TRACE: [number, number][] = [
+  [48.20480, 16.36880],
+  [48.20510, 16.37020],
+  [48.20560, 16.37140],
+  [48.20620, 16.37230],
+  [48.20690, 16.37300],
+  [48.20750, 16.37390],
+  [48.20810, 16.37480],
+  [48.20870, 16.37560],
+  [48.20920, 16.37650],
+  [48.20970, 16.37730],
+  [48.21020, 16.37810],
+  [48.21070, 16.37890],
+  [48.21120, 16.37960],
+  [48.21160, 16.38040],
+  [48.21190, 16.38130],
+  [48.21200, 16.38230],
+  [48.21180, 16.38320],
+  [48.21150, 16.38400],
+  [48.21100, 16.38460],
+  [48.21040, 16.38510],
+  [48.20980, 16.38540],
+];
+
+const CENTER: [number, number] = [48.20840, 16.37710];
+
+function TileColorFilter() {
+  const map = useMap();
+  useEffect(() => {
+    const pane = map.getPanes().tilePane as HTMLElement;
+    pane.style.filter =
+      "sepia(18%) hue-rotate(88deg) saturate(0.55) brightness(1.04)";
+    return () => {
+      pane.style.filter = "";
+    };
+  }, [map]);
+  return null;
 }
 
 function PulsingDot() {
@@ -77,7 +71,7 @@ function PulsingDot() {
       <div className="relative">
         <div
           className="w-2.5 h-2.5 rounded-full"
-          style={{ background: "#ff4444", boxShadow: "0 0 0 4px rgba(255,68,68,0.2)" }}
+          style={{ background: "#ff4444", boxShadow: "0 0 0 4px rgba(255,68,68,0.22)" }}
         />
       </div>
       <span className="text-sm font-bold" style={{ color: "#ff4444" }}>
@@ -89,7 +83,6 @@ function PulsingDot() {
 
 export function RecordingScreen() {
   const [paused, setPaused] = useState(false);
-  const [activeTab] = useState("record");
 
   return (
     <div
@@ -97,34 +90,103 @@ export function RecordingScreen() {
       style={{ background: COLORS.background, fontFamily: "'Inter', system-ui, sans-serif" }}
     >
       {/* Status bar */}
-      <div className="flex justify-between items-center px-6 pt-3 pb-1 text-xs font-medium z-10" style={{ color: COLORS.text }}>
+      <div
+        className="flex justify-between items-center px-6 pt-3 pb-1 text-xs font-medium z-10"
+        style={{ color: COLORS.text }}
+      >
         <span>9:41</span>
         <PulsingDot />
         <span className="font-bold">●●●</span>
       </div>
 
-      {/* Map - full width */}
-      <div className="w-full h-52 relative overflow-hidden">
-        <GPSPath />
+      {/* Real OSM Map */}
+      <div className="w-full relative overflow-hidden" style={{ height: "220px" }}>
+        <MapContainer
+          center={CENTER}
+          zoom={15}
+          zoomControl={false}
+          attributionControl={false}
+          style={{ width: "100%", height: "100%" }}
+          dragging={false}
+          scrollWheelZoom={false}
+          doubleClickZoom={false}
+          touchZoom={false}
+        >
+          <TileLayer
+            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+            subdomains="abcd"
+            maxZoom={19}
+          />
+          <TileColorFilter />
+
+          {/* GPS trace */}
+          <Polyline
+            positions={GPS_TRACE}
+            pathOptions={{
+              color: COLORS.trace,
+              weight: 4,
+              opacity: 0.9,
+              lineCap: "round",
+              lineJoin: "round",
+            }}
+          />
+
+          {/* Start dot */}
+          <CircleMarker
+            center={GPS_TRACE[0]}
+            radius={6}
+            pathOptions={{
+              color: "white",
+              weight: 2,
+              fillColor: COLORS.primary,
+              fillOpacity: 1,
+            }}
+          />
+
+          {/* Current position */}
+          <CircleMarker
+            center={GPS_TRACE[GPS_TRACE.length - 1]}
+            radius={9}
+            pathOptions={{
+              color: "white",
+              weight: 2.5,
+              fillColor: COLORS.trace,
+              fillOpacity: 1,
+            }}
+          />
+          <CircleMarker
+            center={GPS_TRACE[GPS_TRACE.length - 1]}
+            radius={18}
+            pathOptions={{
+              color: COLORS.trace,
+              weight: 0,
+              fillColor: COLORS.trace,
+              fillOpacity: 0.18,
+            }}
+          />
+        </MapContainer>
+
         {/* Gradient overlay at bottom */}
         <div
-          className="absolute bottom-0 left-0 right-0 h-10"
+          className="absolute bottom-0 left-0 right-0 h-10 pointer-events-none z-10"
           style={{ background: `linear-gradient(to top, ${COLORS.background}, transparent)` }}
         />
-        {/* GPS accuracy badge */}
+
+        {/* GPS badge */}
         <div
-          className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full"
-          style={{ background: "rgba(255,255,255,0.9)", backdropFilter: "blur(8px)" }}
+          className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full z-20 pointer-events-none"
+          style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(8px)" }}
         >
           <Navigation size={11} style={{ color: COLORS.accent }} />
           <span className="text-xs font-semibold" style={{ color: COLORS.text }}>
-            GPS: ±3m
+            GPS ±3 m
           </span>
         </div>
-        {/* Map type badge */}
+
+        {/* Activity type badge */}
         <div
-          className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full"
-          style={{ background: "rgba(255,255,255,0.9)", backdropFilter: "blur(8px)" }}
+          className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full z-20 pointer-events-none"
+          style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(8px)" }}
         >
           <MapPin size={11} style={{ color: COLORS.primary }} />
           <span className="text-xs font-semibold" style={{ color: COLORS.text }}>
@@ -133,7 +195,7 @@ export function RecordingScreen() {
         </div>
       </div>
 
-      {/* Timer - large display */}
+      {/* Timer */}
       <div className="px-5 pt-3 pb-2">
         <div className="text-center mb-3">
           <div
@@ -147,30 +209,12 @@ export function RecordingScreen() {
           </p>
         </div>
 
-        {/* Main stats grid */}
+        {/* Main stats */}
         <div className="grid grid-cols-3 gap-2 mb-3">
           {[
-            {
-              label: "Distance",
-              value: "5.24",
-              unit: "km",
-              icon: MapPin,
-              color: COLORS.primary,
-            },
-            {
-              label: "Pace",
-              value: "5:23",
-              unit: "/km",
-              icon: Zap,
-              color: COLORS.accent,
-            },
-            {
-              label: "Calories",
-              value: "312",
-              unit: "kcal",
-              icon: Flame,
-              color: COLORS.trace,
-            },
+            { label: "Distance", value: "5.24", unit: "km", icon: MapPin, color: COLORS.primary },
+            { label: "Pace", value: "5:23", unit: "/km", icon: Zap, color: COLORS.accent },
+            { label: "Calories", value: "312", unit: "kcal", icon: Flame, color: COLORS.trace },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -221,10 +265,9 @@ export function RecordingScreen() {
         </div>
       </div>
 
-      {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Control buttons row above nav */}
+      {/* Lap / waypoint buttons */}
       <div className="flex items-center justify-center gap-6 px-5 pb-3">
         <button
           className="w-12 h-12 rounded-full flex items-center justify-center shadow-sm"
@@ -242,33 +285,30 @@ export function RecordingScreen() {
 
       {/* Bottom Nav */}
       <div
-        className="relative flex items-center justify-around pt-3 pb-5 px-4"
+        className="relative flex items-center pt-3 pb-5"
         style={{ background: "white", boxShadow: "0 -4px 20px rgba(0,0,0,0.07)" }}
       >
-        <button className="flex flex-col items-center gap-1">
+        <button className="flex-1 flex flex-col items-center gap-1">
           <BarChart2 size={22} style={{ color: "#bbb" }} />
-          <span className="text-[10px] font-semibold" style={{ color: "#bbb" }}>
-            Dashboard
-          </span>
+          <span className="text-[10px] font-semibold" style={{ color: "#bbb" }}>Dashboard</span>
         </button>
 
-        <button className="flex flex-col items-center gap-1">
+        <button className="flex-1 flex flex-col items-center gap-1">
           <History size={22} style={{ color: "#bbb" }} />
-          <span className="text-[10px] font-semibold" style={{ color: "#bbb" }}>
-            History
-          </span>
+          <span className="text-[10px] font-semibold" style={{ color: "#bbb" }}>History</span>
         </button>
 
-        {/* FAB - stop/pause */}
+        {/* Center spacer */}
+        <div className="flex-1" />
+
+        {/* FAB — stop + pause/play */}
         <div className="absolute left-1/2 -translate-x-1/2 -top-7 flex gap-2">
-          {/* Stop button */}
           <button
             className="w-12 h-12 rounded-full flex items-center justify-center shadow-md"
             style={{ background: "#ff4444", boxShadow: "0 4px 14px rgba(255,68,68,0.4)" }}
           >
             <Square size={18} color="white" fill="white" />
           </button>
-          {/* Pause/Resume */}
           <button
             onClick={() => setPaused(!paused)}
             className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg -mt-1"
@@ -285,18 +325,14 @@ export function RecordingScreen() {
           </button>
         </div>
 
-        <button className="flex flex-col items-center gap-1">
+        <button className="flex-1 flex flex-col items-center gap-1">
           <Video size={22} style={{ color: "#bbb" }} />
-          <span className="text-[10px] font-semibold" style={{ color: "#bbb" }}>
-            Videos
-          </span>
+          <span className="text-[10px] font-semibold" style={{ color: "#bbb" }}>Videos</span>
         </button>
 
-        <button className="flex flex-col items-center gap-1">
+        <button className="flex-1 flex flex-col items-center gap-1">
           <User size={22} style={{ color: "#bbb" }} />
-          <span className="text-[10px] font-semibold" style={{ color: "#bbb" }}>
-            Profile
-          </span>
+          <span className="text-[10px] font-semibold" style={{ color: "#bbb" }}>Profile</span>
         </button>
       </div>
     </div>

@@ -325,36 +325,32 @@ export function HomeScreen() {
 
       {/* Bottom Nav */}
       <div
-        className="relative flex items-center justify-around pt-3 pb-5 px-4"
+        className="relative flex items-center pt-3 pb-5"
         style={{ background: "white", boxShadow: "0 -4px 20px rgba(0,0,0,0.07)" }}
       >
         {[
           { id: "home", icon: BarChart2, label: "Dashboard" },
           { id: "history", icon: History, label: "History" },
-        ].map((tab, i) => {
+        ].map((tab) => {
           const active = activeTab === tab.id;
           return (
             <button
               key={tab.id}
-              className="flex flex-col items-center gap-1"
+              className="flex-1 flex flex-col items-center gap-1"
               onClick={() => setActiveTab(tab.id)}
-              style={{ marginLeft: i === 0 ? 0 : "auto" }}
             >
-              <tab.icon
-                size={22}
-                style={{ color: active ? COLORS.primary : "#bbb" }}
-              />
-              <span
-                className="text-[10px] font-semibold"
-                style={{ color: active ? COLORS.primary : "#bbb" }}
-              >
+              <tab.icon size={22} style={{ color: active ? COLORS.primary : "#bbb" }} />
+              <span className="text-[10px] font-semibold" style={{ color: active ? COLORS.primary : "#bbb" }}>
                 {tab.label}
               </span>
             </button>
           );
         })}
 
-        {/* FAB Record Button */}
+        {/* Center slot — invisible spacer so FAB sits in a true 1/5 slot */}
+        <div className="flex-1" />
+
+        {/* FAB Record Button — absolutely centered over the spacer */}
         <div className="absolute left-1/2 -translate-x-1/2 -top-7">
           <div
             className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
@@ -375,7 +371,7 @@ export function HomeScreen() {
           return (
             <button
               key={tab.id}
-              className="flex flex-col items-center gap-1"
+              className="flex-1 flex flex-col items-center gap-1"
               onClick={() => setActiveTab(tab.id)}
             >
               <tab.icon size={22} style={{ color: active ? COLORS.primary : "#bbb" }} />
