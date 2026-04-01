@@ -2,7 +2,7 @@ import * as Haptics from "expo-haptics";
 import * as MediaLibrary from "expo-media-library";
 import { router, useLocalSearchParams } from "expo-router";
 import { useVideoPlayer, VideoView } from "expo-video";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Platform,
@@ -29,6 +29,8 @@ function getTimeOfDay(ts: number) {
   return h < 12 ? "Morning" : h < 17 ? "Afternoon" : "Evening";
 }
 
+const AUTO_HIDE_MS = 3000;
+
 export default function VideoReplayScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { activities } = useActivities();
@@ -37,6 +39,8 @@ export default function VideoReplayScreen() {
   const insets = useSafeAreaInsets();
   const [showControls, setShowControls] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activity = activities.find((a) => a.id === id);
   const video = activity ? getVideoForActivity(activity.id) : undefined;
@@ -46,14 +50,38 @@ export default function VideoReplayScreen() {
     p.play();
   });
 
-  useEffect(() => {
-    const timer = setTimeout(() => setShowControls(false), 3000);
-    return () => clearTimeout(timer);
+  const resetHideTimer = useCallback(() => {
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = setTimeout(() => setShowControls(false), AUTO_HIDE_MS);
   }, []);
+
+  const revealControls = useCallback(() => {
+    setShowControls(true);
+    resetHideTimer();
+  }, [resetHideTimer]);
+
+  const toggleControls = useCallback(() => {
+    setShowControls((prev) => {
+      if (!prev) {
+        resetHideTimer();
+        return true;
+      }
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+      return false;
+    });
+  }, [resetHideTimer]);
+
+  useEffect(() => {
+    resetHideTimer();
+    return () => {
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    };
+  }, [resetHideTimer]);
 
   const handleExport = async () => {
     if (!video?.filePath || video.filePath === "web-blob") return;
     setExporting(true);
+    revealControls();
 
     try {
       const { status } = await MediaLibrary.requestPermissionsAsync();
@@ -79,6 +107,20 @@ export default function VideoReplayScreen() {
       Alert.alert("Export Failed", err?.message || "Could not save the video.");
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handlePlayPause = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (player.playing) {
+      player.pause();
+      setIsPlaying(false);
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+      setShowControls(true);
+    } else {
+      player.play();
+      setIsPlaying(true);
+      resetHideTimer();
     }
   };
 
@@ -116,7 +158,7 @@ export default function VideoReplayScreen() {
       <TouchableOpacity
         activeOpacity={1}
         className="flex-1"
-        onPress={() => setShowControls(!showControls)}
+        onPress={toggleControls}
       >
         <VideoView
           player={player}
@@ -127,73 +169,71 @@ export default function VideoReplayScreen() {
       </TouchableOpacity>
 
       {showControls && (
-        <View
-          className="absolute top-0 left-0 right-0 z-10 flex-row items-center justify-between px-4"
-          style={{ paddingTop: Platform.OS === "web" ? 12 : insets.top + 4, paddingBottom: 8, backgroundColor: "rgba(0,0,0,0.5)" }}
-        >
-          <TouchableOpacity
-            className="w-9 h-9 rounded-full items-center justify-center"
-            style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
-            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }}
+        <>
+          <View
+            className="absolute top-0 left-0 right-0 z-10 flex-row items-center justify-between px-4"
+            style={{ paddingTop: Platform.OS === "web" ? 12 : insets.top + 4, paddingBottom: 10, backgroundColor: "rgba(0,0,0,0.55)" }}
           >
-            <Icon name="arrow-back" size={20} color="white" />
-          </TouchableOpacity>
-
-          <Text className="text-white text-[15px] font-inter-semibold flex-1 text-center" numberOfLines={1}>
-            {activityName}
-          </Text>
-
-          <TouchableOpacity
-            className="w-9 h-9 rounded-full items-center justify-center"
-            style={{ backgroundColor: "rgba(255,255,255,0.15)", opacity: exporting ? 0.5 : 1 }}
-            disabled={exporting}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              handleExport();
-            }}
-          >
-            <Icon name="download" size={18} color="white" />
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {showControls && (
-        <View
-          className="absolute bottom-0 left-0 right-0 z-10 items-center px-4"
-          style={{ paddingBottom: Platform.OS === "web" ? 20 : insets.bottom + 16, paddingTop: 16, backgroundColor: "rgba(0,0,0,0.5)" }}
-        >
-          <View className="flex-row items-center justify-center gap-6">
             <TouchableOpacity
-              className="w-14 h-14 rounded-full items-center justify-center"
-              style={{ backgroundColor: colors.primary }}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                if (player.playing) {
-                  player.pause();
-                } else {
-                  player.play();
-                }
-                setShowControls(true);
-              }}
+              className="w-10 h-10 rounded-full items-center justify-center"
+              style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }}
             >
-              <Icon name={player.playing ? "pause" : "play"} size={24} color="white" />
+              <Icon name="arrow-back" size={20} color="white" />
+            </TouchableOpacity>
+
+            <Text className="text-white text-[15px] font-inter-semibold flex-1 text-center mx-3" numberOfLines={1}>
+              {activityName}
+            </Text>
+
+            {Platform.OS !== "web" && (
+              <TouchableOpacity
+                className="w-10 h-10 rounded-full items-center justify-center"
+                style={{ backgroundColor: "rgba(255,255,255,0.15)", opacity: exporting ? 0.5 : 1 }}
+                disabled={exporting}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  handleExport();
+                }}
+              >
+                <Icon name="download" size={18} color="white" />
+              </TouchableOpacity>
+            )}
+            {Platform.OS === "web" && <View className="w-10" />}
+          </View>
+
+          <View
+            className="absolute inset-0 z-10 items-center justify-center"
+            pointerEvents="box-none"
+          >
+            <TouchableOpacity
+              className="w-16 h-16 rounded-full items-center justify-center"
+              style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+              onPress={handlePlayPause}
+            >
+              <Icon name={isPlaying ? "pause" : "play"} size={28} color="white" />
             </TouchableOpacity>
           </View>
 
-          {Platform.OS !== "web" && (
-            <TouchableOpacity
-              className="flex-row items-center gap-2 mt-4 px-5 py-2.5 rounded-xl"
-              style={{ backgroundColor: "rgba(255,255,255,0.15)", opacity: exporting ? 0.5 : 1 }}
-              disabled={exporting}
-              onPress={handleExport}
-            >
-              <Icon name="download" size={16} color="white" />
-              <Text className="text-white text-[13px] font-inter-semibold">
-                {exporting ? "Exporting..." : "Export to Device"}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
+          <View
+            className="absolute bottom-0 left-0 right-0 z-10 items-center px-4"
+            style={{ paddingBottom: Platform.OS === "web" ? 20 : insets.bottom + 16, paddingTop: 14, backgroundColor: "rgba(0,0,0,0.55)" }}
+          >
+            {Platform.OS !== "web" && (
+              <TouchableOpacity
+                className="flex-row items-center gap-2 px-5 py-2.5 rounded-xl"
+                style={{ backgroundColor: "rgba(255,255,255,0.15)", opacity: exporting ? 0.5 : 1 }}
+                disabled={exporting}
+                onPress={handleExport}
+              >
+                <Icon name="download" size={16} color="white" />
+                <Text className="text-white text-[13px] font-inter-semibold">
+                  {exporting ? "Exporting..." : "Export to Device"}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </>
       )}
     </View>
   );
