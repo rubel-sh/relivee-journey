@@ -83,6 +83,10 @@ export default function RecordingScreen() {
   const [paused, setPaused] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [followMap, setFollowMap] = useState(true);
+  const [laps, setLaps] = useState<Array<{ duration: number; distance: number }>>([]);
+  const [pins, setPins] = useState<Coordinate[]>([]);
+  const [screenLocked, setScreenLocked] = useState(false);
+  const [lapFlash, setLapFlash] = useState<string | null>(null);
 
   const mapRef = useRef<MapView>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -91,6 +95,7 @@ export default function RecordingScreen() {
   const lastAltRef = useRef<number | null>(null);
   const startTimeRef = useRef(Date.now());
   const pausedRef = useRef(false);
+  const lapFlashTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const triggerRotate = useRef(new Animated.Value(0)).current;
   const triggerScale = useRef(new Animated.Value(1)).current;
@@ -237,6 +242,38 @@ export default function RecordingScreen() {
     pausedRef.current = !pausedRef.current;
     setPaused(pausedRef.current);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+
+  const handleMarkLap = () => {
+    setLaps((prev) => {
+      const lapNum = prev.length + 1;
+      const lapDist = distance / 1000;
+      const lapLabel = `Lap ${lapNum}  ·  ${formatDuration(duration)}  ·  ${lapDist.toFixed(2)} km`;
+      setLapFlash(lapLabel);
+      if (lapFlashTimeout.current) clearTimeout(lapFlashTimeout.current);
+      lapFlashTimeout.current = setTimeout(() => setLapFlash(null), 3000);
+      return [...prev, { duration, distance }];
+    });
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  };
+
+  const handleDropPin = () => {
+    setCoords((c) => {
+      if (c.length > 0) {
+        const last = c[c.length - 1];
+        setPins((p) => [...p, last]);
+        setLapFlash(`📍 Pin dropped`);
+        if (lapFlashTimeout.current) clearTimeout(lapFlashTimeout.current);
+        lapFlashTimeout.current = setTimeout(() => setLapFlash(null), 2000);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
+      return c;
+    });
+  };
+
+  const handleLockToggle = () => {
+    setScreenLocked((v) => !v);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
   };
 
   const handleStop = () => {
@@ -428,6 +465,16 @@ export default function RecordingScreen() {
             strokeWidth={0}
           />
         )}
+        {pins.map((pin, i) => (
+          <Circle
+            key={`pin-${i}`}
+            center={{ latitude: pin.latitude, longitude: pin.longitude }}
+            radius={16}
+            fillColor="#088395cc"
+            strokeColor="white"
+            strokeWidth={2}
+          />
+        ))}
       </MapView>
 
       {/* Top bar */}
@@ -572,41 +619,139 @@ export default function RecordingScreen() {
         </Animated.View>
       </View>
 
-      {/* Bottom nav */}
+      {/* Lap flash toast */}
+      {lapFlash && (
+        <View
+          className="absolute left-3 right-3 z-30 flex-row items-center gap-2.5 px-4 py-3 rounded-2xl"
+          style={{
+            bottom: botPad + 96,
+            backgroundColor: "rgba(20,20,20,0.88)",
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.25,
+            shadowRadius: 12,
+            elevation: 12,
+          }}
+        >
+          <Icon name="flag-outline" size={16} color={cfg.color} />
+          <Text className="text-sm font-inter-semibold flex-1" style={{ color: "white" }}>{lapFlash}</Text>
+        </View>
+      )}
+
+      {/* Lock overlay */}
+      {screenLocked && (
+        <View
+          className="absolute inset-0 z-40 items-center justify-center"
+          style={{ backgroundColor: "rgba(0,0,0,0.72)" }}
+        >
+          <View className="items-center gap-5">
+            <Icon name="lock" size={44} color="white" />
+            <View className="items-center gap-1">
+              <Text className="text-white text-2xl font-inter-bold">{formatDuration(duration)}</Text>
+              <Text className="text-white/70 text-base font-inter-regular">{(distance / 1000).toFixed(2)} km</Text>
+            </View>
+            <TouchableOpacity
+              className="flex-row items-center gap-2 px-8 py-3.5 rounded-full mt-4"
+              style={{ backgroundColor: "rgba(255,255,255,0.15)", borderWidth: 1.5, borderColor: "rgba(255,255,255,0.35)" }}
+              onPress={handleLockToggle}
+            >
+              <Icon name="unlock" size={18} color="white" />
+              <Text className="text-white text-[15px] font-inter-semibold">Tap to Unlock</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* Bottom nav — recording-specific controls */}
       <View
-        className="absolute bottom-0 left-0 right-0 flex-row items-center border-t pt-2 z-10"
-        style={{ paddingBottom: botPad, backgroundColor: colors.card, borderTopColor: colors.border }}
+        className="absolute bottom-0 left-0 right-0 flex-row items-center border-t pt-1.5 z-10"
+        style={{ paddingBottom: botPad || 8, backgroundColor: "rgba(255,255,255,0.97)", borderTopColor: colors.border }}
       >
-        <TouchableOpacity className="flex-1 items-center justify-center pt-1 gap-[3px] min-h-[50px]" onPress={handleStop}>
-          <View className="w-8 h-8 rounded-2xl bg-[#FFF0F0] items-center justify-center">
-            <Icon name="square" size={16} color={colors.destructive} />
+        {/* Stop */}
+        <TouchableOpacity
+          className="flex-1 items-center justify-center py-1.5 gap-1"
+          onPress={handleStop}
+        >
+          <View className="w-9 h-9 rounded-2xl items-center justify-center" style={{ backgroundColor: "#FFF0F0" }}>
+            <Icon name="square" size={17} color={colors.destructive} />
           </View>
           <Text className="text-[10px] font-inter-semibold" style={{ color: colors.destructive }}>Stop</Text>
         </TouchableOpacity>
 
-        <View className="flex-1 items-center justify-center pt-1 gap-[3px] min-h-[50px]">
-          <Icon name="time-outline" size={22} color={colors.mutedForeground} />
-          <Text className="text-[10px] font-inter-semibold" style={{ color: colors.mutedForeground }}>History</Text>
-        </View>
+        {/* Lap */}
+        <TouchableOpacity
+          className="flex-1 items-center justify-center py-1.5 gap-1"
+          onPress={handleMarkLap}
+        >
+          <View className="relative">
+            <View className="w-9 h-9 rounded-2xl items-center justify-center" style={{ backgroundColor: `${cfg.color}18` }}>
+              <Icon name="flag-outline" size={17} color={cfg.color} />
+            </View>
+            {laps.length > 0 && (
+              <View
+                className="absolute -top-1.5 -right-1.5 w-[18px] h-[18px] rounded-full items-center justify-center"
+                style={{ backgroundColor: cfg.color }}
+              >
+                <Text className="text-white text-[9px] font-inter-bold">{laps.length}</Text>
+              </View>
+            )}
+          </View>
+          <Text className="text-[10px] font-inter-semibold" style={{ color: cfg.color }}>Lap</Text>
+        </TouchableOpacity>
 
-        <TouchableOpacity className="flex-1 items-center justify-center pt-1 gap-[3px] min-h-[50px]" onPress={handlePause}>
+        {/* Pause / Resume — centre FAB */}
+        <TouchableOpacity
+          className="flex-1 items-center justify-center py-1 gap-1"
+          onPress={handlePause}
+        >
           <View
-            className="w-[52px] h-[52px] rounded-[26px] items-center justify-center"
-            style={{ backgroundColor: paused ? colors.accent : cfg.color, shadowColor: cfg.color, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 6 }}
+            className="w-[54px] h-[54px] rounded-[27px] items-center justify-center"
+            style={{
+              backgroundColor: paused ? colors.accent : cfg.color,
+              shadowColor: cfg.color,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.4,
+              shadowRadius: 10,
+              elevation: 8,
+            }}
           >
-            <Icon name={paused ? "play" : "pause"} size={22} color="white" />
+            <Icon name={paused ? "play" : "pause"} size={24} color="white" />
           </View>
         </TouchableOpacity>
 
-        <View className="flex-1 items-center justify-center pt-1 gap-[3px] min-h-[50px]">
-          <Icon name="videocam-outline" size={22} color={colors.mutedForeground} />
-          <Text className="text-[10px] font-inter-semibold" style={{ color: colors.mutedForeground }}>Videos</Text>
-        </View>
+        {/* Drop Pin */}
+        <TouchableOpacity
+          className="flex-1 items-center justify-center py-1.5 gap-1"
+          onPress={handleDropPin}
+        >
+          <View className="relative">
+            <View className="w-9 h-9 rounded-2xl items-center justify-center" style={{ backgroundColor: `${colors.accent}18` }}>
+              <Icon name="location-outline" size={17} color={colors.accent} />
+            </View>
+            {pins.length > 0 && (
+              <View
+                className="absolute -top-1.5 -right-1.5 w-[18px] h-[18px] rounded-full items-center justify-center"
+                style={{ backgroundColor: colors.accent }}
+              >
+                <Text className="text-white text-[9px] font-inter-bold">{pins.length}</Text>
+              </View>
+            )}
+          </View>
+          <Text className="text-[10px] font-inter-semibold" style={{ color: colors.accent }}>Pin</Text>
+        </TouchableOpacity>
 
-        <View className="flex-1 items-center justify-center pt-1 gap-[3px] min-h-[50px]">
-          <Icon name="person-outline" size={22} color={colors.mutedForeground} />
-          <Text className="text-[10px] font-inter-semibold" style={{ color: colors.mutedForeground }}>Profile</Text>
-        </View>
+        {/* Lock */}
+        <TouchableOpacity
+          className="flex-1 items-center justify-center py-1.5 gap-1"
+          onPress={handleLockToggle}
+        >
+          <View className="w-9 h-9 rounded-2xl items-center justify-center" style={{ backgroundColor: screenLocked ? "#26262618" : "#26262612" }}>
+            <Icon name={screenLocked ? "lock" : "lock-outline"} size={17} color={screenLocked ? colors.foreground : colors.mutedForeground} />
+          </View>
+          <Text className="text-[10px] font-inter-semibold" style={{ color: screenLocked ? colors.foreground : colors.mutedForeground }}>
+            {screenLocked ? "Locked" : "Lock"}
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
