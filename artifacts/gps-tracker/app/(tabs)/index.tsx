@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "@/components/Icon";
 import { Activity, useActivities } from "@/context/ActivityContext";
 import { useColors } from "@/hooks/useColors";
+import { useStartEndLocations } from "@/hooks/useLocationName";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 const GRID_PAD = 16;
@@ -124,6 +125,15 @@ function ActivityCard({ activity, featured }: { activity: Activity; featured?: b
     hour: "numeric",
     minute: "2-digit",
   });
+  const startCoord = activity.coordinates[0];
+  const endCoord = activity.coordinates[activity.coordinates.length - 1];
+  const { startName, endName } = useStartEndLocations(
+    startCoord?.latitude, startCoord?.longitude,
+    endCoord?.latitude, endCoord?.longitude
+  );
+  const locationLabel = startName && endName && startName !== endName
+    ? `${startName} → ${endName}`
+    : startName || "";
 
   return (
     <TouchableOpacity
@@ -171,7 +181,7 @@ function ActivityCard({ activity, featured }: { activity: Activity; featured?: b
           <Rect x={0} y={thumbH * 0.58} width={cardW} height={thumbH * 0.42} fill="rgba(0,0,0,0.38)" />
         </Svg>
 
-        {/* Top badges */}
+        {/* Top badge */}
         <View className="flex-row justify-between items-center p-2">
           <View className="flex-row items-center gap-1 bg-black/[0.28] px-[7px] py-1 rounded-full">
             <Icon name={TYPE_ICON[activity.type]} size={featured ? 13 : 11} color="white" />
@@ -181,14 +191,19 @@ function ActivityCard({ activity, featured }: { activity: Activity; featured?: b
               </Text>
             )}
           </View>
-          <View className="flex-row items-center gap-[3px] bg-black/[0.28] px-1.5 py-1 rounded-full">
-            <Icon name="videocam" size={9} color="white" />
-            <Text className="text-white text-[9px] font-inter-bold">4K</Text>
-          </View>
         </View>
 
-        {/* Distance overlay */}
-        <View className="px-2.5 pb-3" style={{ paddingTop: featured ? 4 : 2 }}>
+        {/* Distance + location overlay */}
+        <View className="px-2.5 pb-2.5" style={{ paddingTop: featured ? 4 : 2 }}>
+          {locationLabel ? (
+            <Text
+              className="text-white/80 font-inter-medium mb-0.5"
+              style={{ fontSize: featured ? 11 : 9 }}
+              numberOfLines={1}
+            >
+              {locationLabel}
+            </Text>
+          ) : null}
           <Text className="text-white font-inter-bold" style={{ fontSize: featured ? 28 : 20, lineHeight: featured ? 34 : 26 }}>
             {distKm}
             <Text style={{ fontSize: 12 }} className="font-inter-medium text-white/85"> km</Text>
