@@ -7,11 +7,9 @@ import {
   BarChart2,
   Mountain,
   Timer,
-  Flame,
   MapPin,
   ChevronRight,
   Filter,
-  Download,
   Share2,
   Zap,
 } from "lucide-react";
@@ -33,8 +31,8 @@ const allActivities = [
     distance: "5.2 km",
     distanceVal: 5.2,
     duration: "28:14",
-    pace: "5:26",
-    calories: 312,
+    avgSpeed: "11.1",
+    maxSpeed: "14.8",
     elevation: 64,
     tag: "run",
     hasVideo: true,
@@ -48,8 +46,8 @@ const allActivities = [
     distance: "18.6 km",
     distanceVal: 18.6,
     duration: "52:30",
-    pace: "21.3",
-    calories: 480,
+    avgSpeed: "21.3",
+    maxSpeed: "34.2",
     elevation: 120,
     tag: "cycle",
     hasVideo: true,
@@ -63,8 +61,8 @@ const allActivities = [
     distance: "12.1 km",
     distanceVal: 12.1,
     duration: "2h 18m",
-    pace: "11:23",
-    calories: 720,
+    avgSpeed: "5.3",
+    maxSpeed: "8.4",
     elevation: 480,
     tag: "hike",
     hasVideo: true,
@@ -78,8 +76,8 @@ const allActivities = [
     distance: "4.8 km",
     distanceVal: 4.8,
     duration: "26:40",
-    pace: "5:33",
-    calories: 290,
+    avgSpeed: "10.8",
+    maxSpeed: "13.1",
     elevation: 38,
     tag: "run",
     hasVideo: false,
@@ -93,8 +91,8 @@ const allActivities = [
     distance: "3.2 km",
     distanceVal: 3.2,
     duration: "38:00",
-    pace: "11:52",
-    calories: 140,
+    avgSpeed: "5.1",
+    maxSpeed: "6.2",
     elevation: 12,
     tag: "walk",
     hasVideo: false,
@@ -136,7 +134,7 @@ export function HistoryScreen() {
   const filtered = filter === "all" ? allActivities : allActivities.filter((a) => a.tag === filter);
 
   const totalDist = filtered.reduce((s, a) => s + a.distanceVal, 0).toFixed(1);
-  const totalCal = filtered.reduce((s, a) => s + a.calories, 0);
+  const topSpeed = filtered.reduce((max, a) => Math.max(max, parseFloat(a.maxSpeed)), 0).toFixed(1);
   const withVideo = filtered.filter((a) => a.hasVideo).length;
 
   return (
@@ -175,7 +173,7 @@ export function HistoryScreen() {
       <div className="mx-5 mb-3 rounded-2xl px-4 py-3 flex justify-between" style={{ background: COLORS.text }}>
         {[
           { val: `${totalDist} km`, label: "Distance", color: COLORS.primary },
-          { val: `${totalCal}`, label: "Calories", color: COLORS.trace },
+          { val: `${topSpeed} km/h`, label: "Top Speed", color: COLORS.trace },
           { val: `${withVideo}`, label: "Videos", color: COLORS.accent },
           { val: `${filtered.length}`, label: "Trips", color: "#ccc" },
         ].map((s) => (
@@ -270,9 +268,9 @@ export function HistoryScreen() {
                         </span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Flame size={10} style={{ color: COLORS.trace }} />
+                        <Zap size={10} style={{ color: COLORS.trace }} />
                         <span className="text-xs font-semibold" style={{ color: COLORS.text }}>
-                          {act.calories} kcal
+                          {act.avgSpeed} km/h
                         </span>
                       </div>
                     </div>
@@ -289,7 +287,7 @@ export function HistoryScreen() {
                       <div className="flex items-center gap-1">
                         <Zap size={10} style={{ color: act.color }} />
                         <span className="text-[10px] font-medium" style={{ color: "#888" }}>
-                          {act.pace} {act.tag === "cycle" ? "km/h" : "/km"}
+                          max {act.maxSpeed} km/h
                         </span>
                       </div>
                       <div className="flex items-center gap-1">

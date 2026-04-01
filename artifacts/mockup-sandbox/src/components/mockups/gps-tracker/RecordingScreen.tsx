@@ -13,9 +13,9 @@ import {
   Zap,
   Navigation,
   Mountain,
-  Heart,
+  TrendingUp,
+  Film,
   Timer,
-  Flame,
 } from "lucide-react";
 
 const COLORS = {
@@ -213,8 +213,8 @@ export function RecordingScreen() {
         <div className="grid grid-cols-3 gap-2 mb-3">
           {[
             { label: "Distance", value: "5.24", unit: "km", icon: MapPin, color: COLORS.primary },
-            { label: "Pace", value: "5:23", unit: "/km", icon: Zap, color: COLORS.accent },
-            { label: "Calories", value: "312", unit: "kcal", icon: Flame, color: COLORS.trace },
+            { label: "Speed", value: "11.2", unit: "km/h", icon: Zap, color: COLORS.accent },
+            { label: "Elev Gain", value: "+64", unit: "m", icon: Mountain, color: COLORS.trace },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -238,8 +238,8 @@ export function RecordingScreen() {
         {/* Secondary stats */}
         <div className="grid grid-cols-2 gap-2 mb-4">
           {[
-            { label: "Elevation", value: "+64 m", icon: Mountain, color: COLORS.accent },
-            { label: "Avg Heart Rate", value: "152 bpm", icon: Heart, color: "#ff6b6b" },
+            { label: "Max Speed", value: "14.8 km/h", icon: TrendingUp, color: COLORS.primary },
+            { label: "3D Video", value: "4K · 60fps", icon: Film, color: COLORS.trace },
           ].map((stat) => (
             <div
               key={stat.label}

@@ -2,13 +2,9 @@ import { useState } from "react";
 import {
   MapPin,
   Play,
-  Clock,
-  TrendingUp,
-  Award,
   Bell,
   ChevronRight,
-  Wind,
-  Flame,
+  Zap,
   BarChart2,
   User,
   History,
@@ -32,8 +28,7 @@ const activities = [
     date: "Today, 6:30 AM",
     distance: "5.2 km",
     duration: "28:14",
-    pace: "5:26 /km",
-    calories: 312,
+    maxSpeed: "14.8 km/h",
     elevation: "64 m",
     color: COLORS.primary,
     hasVideo: true,
@@ -45,8 +40,7 @@ const activities = [
     date: "Yesterday, 5:45 PM",
     distance: "18.6 km",
     duration: "52:30",
-    pace: "21.3 km/h",
-    calories: 480,
+    maxSpeed: "34.2 km/h",
     elevation: "120 m",
     color: COLORS.accent,
     hasVideo: true,
@@ -58,8 +52,7 @@ const activities = [
     date: "Mar 29, 8:00 AM",
     distance: "12.1 km",
     duration: "2h 18m",
-    pace: "11:23 /km",
-    calories: 720,
+    maxSpeed: "8.4 km/h",
     elevation: "480 m",
     color: COLORS.trace,
     hasVideo: true,
@@ -71,8 +64,7 @@ const activities = [
     date: "Mar 28, 7:00 AM",
     distance: "4.8 km",
     duration: "26:40",
-    pace: "5:33 /km",
-    calories: 290,
+    maxSpeed: "13.1 km/h",
     elevation: "38 m",
     color: COLORS.primary,
     hasVideo: false,
@@ -84,8 +76,7 @@ const activities = [
     date: "Mar 27, 6:00 PM",
     distance: "3.2 km",
     duration: "38:00",
-    pace: "11:52 /km",
-    calories: 140,
+    maxSpeed: "6.2 km/h",
     elevation: "12 m",
     color: "#888",
     hasVideo: false,
@@ -144,7 +135,6 @@ export function HomeScreen() {
       <div className="flex justify-between items-center px-6 pt-3 pb-1 text-xs font-medium" style={{ color: COLORS.text }}>
         <span>9:41</span>
         <div className="flex gap-1.5 items-center">
-          <Wind size={12} />
           <span>●●●</span>
           <span>WiFi</span>
           <span className="font-bold">100%</span>
@@ -212,9 +202,9 @@ export function HomeScreen() {
             </div>
             <div>
               <p className="text-xs mb-0.5" style={{ color: "rgba(255,255,255,0.5)" }}>
-                Calories
+                Top Speed
               </p>
-              <p className="text-base font-bold text-white">2,840</p>
+              <p className="text-base font-bold text-white">34.2</p>
             </div>
             <div>
               <p className="text-xs mb-0.5" style={{ color: "rgba(255,255,255,0.5)" }}>
@@ -314,7 +304,7 @@ export function HomeScreen() {
 
                 <div className="flex gap-4">
                   <StatBadge icon={Timer} value={act.duration} label="time" color={act.color} />
-                  <StatBadge icon={Flame} value={`${act.calories}`} label="kcal" color={COLORS.trace} />
+                  <StatBadge icon={Zap} value={act.maxSpeed} label="max" color={COLORS.trace} />
                   <StatBadge icon={Mountain} value={act.elevation} label="elev" color={COLORS.accent} />
                 </div>
               </div>
