@@ -17,3 +17,9 @@ id = "NR78QJCDLjinLB3i15wlI"
 uri = "file://README.md"
 type = "text"
 title = "Journey — Developer README"
+
+[[outputs]]
+id = "JomFlMKhDIjYTI5C12RNg"
+uri = "file://CONTRIBUTING.md"
+type = "text"
+title = "Journey Contributing Guide"
