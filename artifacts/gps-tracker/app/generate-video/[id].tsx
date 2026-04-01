@@ -68,6 +68,7 @@ export default function GenerateVideoScreen() {
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState("Initializing...");
   const [errorMsg, setErrorMsg] = useState("");
+  const [savedVideoId, setSavedVideoId] = useState<string | null>(null);
 
   const chunksRef = useRef<string[]>([]);
   const videoMetaRef = useRef<{ mimeType: string; fileSizeBytes: number; totalChunks: number }>({
@@ -165,6 +166,7 @@ export default function GenerateVideoScreen() {
             });
           }
 
+          setSavedVideoId(videoId);
           setIsGenerating(null);
           setPhase("done");
           setProgress(100);
@@ -255,17 +257,27 @@ export default function GenerateVideoScreen() {
               style={{ backgroundColor: colors.primary }}
               onPress={() => {
                 router.back();
+                setTimeout(() => router.push(`/video-replay/${id}`), 100);
+              }}
+            >
+              <Icon name="play" size={18} color="white" />
+              <Text className="text-white text-[14px] font-inter-bold">Play Video</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="w-full flex-row items-center justify-center gap-2 py-3 mt-2 rounded-xl border border-white/25"
+              onPress={() => {
+                router.back();
                 setTimeout(() => router.push("/(tabs)/videos"), 100);
               }}
             >
-              <Icon name="play" size={16} color="white" />
-              <Text className="text-white text-[14px] font-inter-semibold">View in Videos</Text>
+              <Icon name="film" size={16} color="white" />
+              <Text className="text-white text-[14px] font-inter-semibold">Go to Videos</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              className="w-full items-center py-3 mt-2"
+              className="w-full items-center py-3 mt-1"
               onPress={() => router.back()}
             >
-              <Text className="text-white/70 text-[13px] font-inter-regular">Go Back</Text>
+              <Text className="text-white/50 text-[13px] font-inter-regular">Close</Text>
             </TouchableOpacity>
           </View>
         </View>
