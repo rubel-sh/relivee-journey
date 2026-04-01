@@ -329,6 +329,21 @@ export default function ActivityDetailScreen() {
             </Text>
           </View>
 
+          {/* Watch Replay button */}
+          {activity.coordinates.length >= 2 && (
+            <TouchableOpacity
+              className="flex-row items-center justify-center gap-2 rounded-2xl py-4 mb-3"
+              style={{ backgroundColor: colors.primary }}
+              onPress={() => router.push(`/video-replay/${activity.id}`)}
+              activeOpacity={0.8}
+            >
+              <Icon name="play" size={18} color="white" />
+              <Text className="text-[15px] font-inter-semibold text-white">
+                Watch Journey Replay
+              </Text>
+            </TouchableOpacity>
+          )}
+
           {/* Delete button */}
           <TouchableOpacity
             className="flex-row items-center justify-center gap-2 rounded-2xl py-4 mb-8"

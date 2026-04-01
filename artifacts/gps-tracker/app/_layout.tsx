@@ -27,6 +27,10 @@ function RootLayoutNav() {
         name="activity/[id]"
         options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name="video-replay/[id]"
+        options={{ headerShown: false, presentation: "fullScreenModal" }}
+      />
     </Stack>
   );
 }
