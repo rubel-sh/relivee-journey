@@ -188,10 +188,10 @@ function ActivityCard({ activity, featured }: { activity: Activity; featured?: b
         </View>
 
         {/* Distance overlay */}
-        <View className="p-2 pb-2.5">
-          <Text className="text-white font-inter-bold" style={{ fontSize: featured ? 28 : 22 }}>
+        <View className="px-2.5 pb-3" style={{ paddingTop: featured ? 4 : 2 }}>
+          <Text className="text-white font-inter-bold" style={{ fontSize: featured ? 28 : 20, lineHeight: featured ? 34 : 26 }}>
             {distKm}
-            <Text className="text-xs font-inter-medium text-white/85"> km</Text>
+            <Text style={{ fontSize: 12 }} className="font-inter-medium text-white/85"> km</Text>
           </Text>
         </View>
       </View>
