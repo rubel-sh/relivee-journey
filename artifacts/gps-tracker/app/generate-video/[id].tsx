@@ -1,4 +1,4 @@
-import * as FileSystem from "expo-file-system/legacy";
+import { File as ExpoFile, Directory, Paths } from "expo-file-system";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -156,20 +156,17 @@ export default function GenerateVideoScreen() {
         const fileName = `journey_${id}_${videoId}.${ext}`;
 
         if (!isWeb) {
-          const dir = FileSystem.documentDirectory + "journey_videos/";
-          const dirInfo = await FileSystem.getInfoAsync(dir);
-          if (!dirInfo.exists) {
-            await FileSystem.makeDirectoryAsync(dir, { intermediates: true });
+          const dir = new Directory(Paths.document, "journey_videos");
+          if (!dir.exists) {
+            dir.create({ intermediates: true });
           }
-          const filePath = dir + fileName;
-          await FileSystem.writeAsStringAsync(filePath, base64Data, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
+          const file = new ExpoFile(dir, fileName);
+          file.write(base64Data, { encoding: "base64" });
 
           await addVideo({
             id: videoId,
             activityId: id!,
-            filePath,
+            filePath: file.uri,
             createdAt: Date.now(),
             durationMs,
             fileSize: fileSizeBytes,
