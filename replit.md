@@ -60,6 +60,13 @@ metro.config.js            # Resolves react-native-maps to web stub on platform=
 - `@react-native-async-storage/async-storage 2.2.0`
 - `expo-haptics ~15.0.8`
 
+## GitHub Mirror
+- **Repo**: https://github.com/rubel-sh/relivee-journey
+- **Remote name**: `github` (configured in `.git/config`)
+- **Push script**: `scripts/push-github.mjs` — requires `GITHUB_TOKEN` env var
+- The Replit GitHub integration (`conn_github_01KN3ZBS4VDW044HPJJ0V0WXEK`) is connected and provides the access token
+- The agent pushes after each session by fetching a fresh token via the GitHub connection and running `git push github main`
+
 ## Workflows
 - `artifacts/gps-tracker: expo` — Expo dev server for the mobile app
 
