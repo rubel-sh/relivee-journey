@@ -128,49 +128,56 @@ export default function GenerateVideoScreen() {
         } else if (msg.type === "video-chunk") {
           chunksRef.current[msg.index] = msg.data;
         } else if (msg.type === "video-complete") {
-          setStatusText("Saving video...");
-          setProgress(98);
+          try {
+            setStatusText("Saving video...");
+            setProgress(98);
 
-          const base64Data = chunksRef.current.join("");
-          const ext = videoMetaRef.current.mimeType.includes("mp4") ? "mp4" : "webm";
-          const videoId = Date.now().toString() + Math.random().toString(36).slice(2, 7);
-          const fileName = `journey_${id}_${videoId}.${ext}`;
+            const base64Data = chunksRef.current.join("");
+            const ext = videoMetaRef.current.mimeType.includes("mp4") ? "mp4" : "webm";
+            const videoId = Date.now().toString() + Math.random().toString(36).slice(2, 7);
+            const fileName = `journey_${id}_${videoId}.${ext}`;
 
-          if (!isWeb) {
-            const dir = FileSystem.documentDirectory + "journey_videos/";
-            const dirInfo = await FileSystem.getInfoAsync(dir);
-            if (!dirInfo.exists) {
-              await FileSystem.makeDirectoryAsync(dir, { intermediates: true });
+            if (!isWeb) {
+              const dir = FileSystem.documentDirectory + "journey_videos/";
+              const dirInfo = await FileSystem.getInfoAsync(dir);
+              if (!dirInfo.exists) {
+                await FileSystem.makeDirectoryAsync(dir, { intermediates: true });
+              }
+              const filePath = dir + fileName;
+              await FileSystem.writeAsStringAsync(filePath, base64Data, {
+                encoding: FileSystem.EncodingType.Base64,
+              });
+
+              await addVideo({
+                id: videoId,
+                activityId: id!,
+                filePath,
+                createdAt: Date.now(),
+                durationMs: msg.durationMs,
+                fileSize: msg.fileSizeBytes,
+              });
+            } else {
+              await addVideo({
+                id: videoId,
+                activityId: id!,
+                filePath: "web-blob",
+                createdAt: Date.now(),
+                durationMs: msg.durationMs,
+                fileSize: msg.fileSizeBytes,
+              });
             }
-            const filePath = dir + fileName;
-            await FileSystem.writeAsStringAsync(filePath, base64Data, {
-              encoding: FileSystem.EncodingType.Base64,
-            });
 
-            await addVideo({
-              id: videoId,
-              activityId: id!,
-              filePath,
-              createdAt: Date.now(),
-              durationMs: msg.durationMs,
-              fileSize: msg.fileSizeBytes,
-            });
-          } else {
-            await addVideo({
-              id: videoId,
-              activityId: id!,
-              filePath: "web-blob",
-              createdAt: Date.now(),
-              durationMs: msg.durationMs,
-              fileSize: msg.fileSizeBytes,
-            });
+            setSavedVideoId(videoId);
+            setIsGenerating(null);
+            setPhase("done");
+            setProgress(100);
+            setStatusText("Video saved!");
+          } catch (saveErr: any) {
+            console.warn("Video save failed:", saveErr);
+            setPhase("error");
+            setErrorMsg(saveErr?.message || "Failed to save video file");
+            setIsGenerating(null);
           }
-
-          setSavedVideoId(videoId);
-          setIsGenerating(null);
-          setPhase("done");
-          setProgress(100);
-          setStatusText("Video saved!");
         } else if (msg.type === "error") {
           setPhase("error");
           setErrorMsg(msg.message);

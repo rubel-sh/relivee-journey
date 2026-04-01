@@ -573,10 +573,12 @@ canvas{display:block}
       setProgress(95, 'Transferring video...', 'Sending ' + (blob.size / 1024 / 1024).toFixed(1) + ' MB to app');
 
       const reader = new FileReader();
-      reader.onload = function() {
+      reader.onload = async function() {
         const base64 = reader.result.split(',')[1];
-        const CHUNK_SIZE = 512 * 1024;
+        const CHUNK_SIZE = 256 * 1024;
         const totalChunks = Math.ceil(base64.length / CHUNK_SIZE);
+
+        function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
         try {
           window.ReactNativeWebView?.postMessage(JSON.stringify({
@@ -588,6 +590,8 @@ canvas{display:block}
           }));
         } catch(e) {}
 
+        await delay(100);
+
         for (let i = 0; i < totalChunks; i++) {
           const chunk = base64.substring(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
           try {
@@ -598,7 +602,10 @@ canvas{display:block}
             }));
           } catch(e) {}
           setProgress(95 + Math.round((i / totalChunks) * 4), 'Transferring...', 'Chunk ' + (i+1) + '/' + totalChunks);
+          if (i % 3 === 2) await delay(50);
         }
+
+        await delay(200);
 
         try {
           window.ReactNativeWebView?.postMessage(JSON.stringify({
