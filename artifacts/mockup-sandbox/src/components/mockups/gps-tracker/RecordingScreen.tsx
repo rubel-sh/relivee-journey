@@ -285,36 +285,36 @@ export function RecordingScreen() {
 
       {/* Bottom Nav */}
       <div
-        className="relative flex items-center pt-3 pb-5"
+        className="flex items-center pb-5"
         style={{ background: "white", boxShadow: "0 -4px 20px rgba(0,0,0,0.07)" }}
       >
-        <button className="flex-1 flex flex-col items-center gap-1">
-          <BarChart2 size={22} style={{ color: "#bbb" }} />
-          <span className="text-[10px] font-semibold" style={{ color: "#bbb" }}>Dashboard</span>
+        {/* Stop — replaces Dashboard slot during active recording */}
+        <button className="flex-1 flex flex-col items-center gap-1 pt-3">
+          <div
+            className="w-8 h-8 rounded-full flex items-center justify-center"
+            style={{ background: "#fff0f0" }}
+          >
+            <Square size={14} style={{ color: "#ff4444" }} fill="#ff4444" />
+          </div>
+          <span className="text-[10px] font-semibold" style={{ color: "#ff4444" }}>Stop</span>
         </button>
 
-        <button className="flex-1 flex flex-col items-center gap-1">
+        <button className="flex-1 flex flex-col items-center gap-1 pt-3">
           <History size={22} style={{ color: "#bbb" }} />
           <span className="text-[10px] font-semibold" style={{ color: "#bbb" }}>History</span>
         </button>
 
-        {/* Center spacer */}
-        <div className="flex-1" />
-
-        {/* FAB — stop + pause/play */}
-        <div className="absolute left-1/2 -translate-x-1/2 -top-7 flex gap-2">
-          <button
-            className="w-12 h-12 rounded-full flex items-center justify-center shadow-md"
-            style={{ background: "#ff4444", boxShadow: "0 4px 14px rgba(255,68,68,0.4)" }}
-          >
-            <Square size={18} color="white" fill="white" />
-          </button>
-          <button
-            onClick={() => setPaused(!paused)}
-            className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg -mt-1"
+        {/* FAB — inline pause/resume center button */}
+        <button
+          onClick={() => setPaused(!paused)}
+          className="flex-1 flex items-center justify-center pt-2"
+        >
+          <div
+            className="rounded-full flex items-center justify-center shadow-md"
             style={{
+              width: 52, height: 52,
               background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.accent})`,
-              boxShadow: `0 6px 20px ${COLORS.primary}55`,
+              boxShadow: `0 4px 16px ${COLORS.primary}55`,
             }}
           >
             {paused ? (
@@ -322,15 +322,15 @@ export function RecordingScreen() {
             ) : (
               <Pause size={22} color="white" />
             )}
-          </button>
-        </div>
+          </div>
+        </button>
 
-        <button className="flex-1 flex flex-col items-center gap-1">
+        <button className="flex-1 flex flex-col items-center gap-1 pt-3">
           <Video size={22} style={{ color: "#bbb" }} />
           <span className="text-[10px] font-semibold" style={{ color: "#bbb" }}>Videos</span>
         </button>
 
-        <button className="flex-1 flex flex-col items-center gap-1">
+        <button className="flex-1 flex flex-col items-center gap-1 pt-3">
           <User size={22} style={{ color: "#bbb" }} />
           <span className="text-[10px] font-semibold" style={{ color: "#bbb" }}>Profile</span>
         </button>

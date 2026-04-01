@@ -324,42 +324,40 @@ export function HistoryScreen() {
 
       {/* Bottom Nav */}
       <div
-        className="relative flex items-center pt-3 pb-5"
+        className="flex items-center pb-5"
         style={{ background: "white", boxShadow: "0 -4px 20px rgba(0,0,0,0.07)" }}
       >
-        <button className="flex-1 flex flex-col items-center gap-1">
+        <button className="flex-1 flex flex-col items-center gap-1 pt-3">
           <BarChart2 size={22} style={{ color: "#bbb" }} />
           <span className="text-[10px] font-semibold" style={{ color: "#bbb" }}>Dashboard</span>
         </button>
 
-        <button className="flex-1 flex flex-col items-center gap-1">
+        <button className="flex-1 flex flex-col items-center gap-1 pt-3">
           <History size={22} style={{ color: COLORS.primary }} />
           <span className="text-[10px] font-semibold" style={{ color: COLORS.primary }}>History</span>
           <div className="w-1 h-1 rounded-full" style={{ background: COLORS.primary }} />
         </button>
 
-        {/* Center spacer — keeps FAB centered in its own equal slot */}
-        <div className="flex-1" />
-
-        {/* FAB Record Button — absolutely centered over the spacer */}
-        <div className="absolute left-1/2 -translate-x-1/2 -top-7">
+        {/* FAB — inline center slot */}
+        <button className="flex-1 flex items-center justify-center pt-2">
           <div
-            className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
+            className="rounded-full flex items-center justify-center shadow-md"
             style={{
+              width: 52, height: 52,
               background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.accent})`,
-              boxShadow: `0 6px 20px ${COLORS.primary}55`,
+              boxShadow: `0 4px 16px ${COLORS.primary}55`,
             }}
           >
             <Play size={22} color="white" fill="white" />
           </div>
-        </div>
+        </button>
 
-        <button className="flex-1 flex flex-col items-center gap-1">
+        <button className="flex-1 flex flex-col items-center gap-1 pt-3">
           <Video size={22} style={{ color: "#bbb" }} />
           <span className="text-[10px] font-semibold" style={{ color: "#bbb" }}>Videos</span>
         </button>
 
-        <button className="flex-1 flex flex-col items-center gap-1">
+        <button className="flex-1 flex flex-col items-center gap-1 pt-3">
           <User size={22} style={{ color: "#bbb" }} />
           <span className="text-[10px] font-semibold" style={{ color: "#bbb" }}>Profile</span>
         </button>
