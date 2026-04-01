@@ -624,6 +624,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     gap: 10,
     zIndex: 20,
+    elevation: 20,
   },
   menuItems: {
     gap: 8,
@@ -640,12 +641,12 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
     paddingRight: 14,
     borderRadius: 24,
+    width: 152,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.13,
     shadowRadius: 12,
     elevation: 6,
-    overflow: "hidden",
   },
   menuIconWrap: {
     width: 32,
@@ -653,16 +654,19 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0,
   },
   menuPillText: {
     fontSize: 13,
     fontFamily: "Inter_600SemiBold",
-    flex: 1,
+    flexShrink: 1,
+    flexGrow: 1,
   },
   menuAccentBar: {
     width: 3,
     height: 20,
     borderRadius: 2,
+    flexShrink: 0,
   },
   menuTrigger: {
     width: 46,
