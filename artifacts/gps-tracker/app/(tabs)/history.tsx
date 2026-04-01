@@ -11,7 +11,9 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Icon } from "@/components/Icon";
+import VideoOptionsModal, { VideoOptions } from "@/components/VideoOptionsModal";
 import { Activity, useActivities } from "@/context/ActivityContext";
+import { useVideos } from "@/context/VideoContext";
 import { useColors } from "@/hooks/useColors";
 
 type FilterType = "all" | Activity["type"];
@@ -63,127 +65,171 @@ function formatDate(ts: number) {
 
 function HistoryCard({ activity }: { activity: Activity }) {
   const colors = useColors();
+  const { getVideoForActivity } = useVideos();
   const [expanded, setExpanded] = useState(false);
+  const [showVideoOptions, setShowVideoOptions] = useState(false);
   const gradient = TYPE_GRADIENT[activity.type];
+  const hasVideo = !!getVideoForActivity(activity.id);
+
+  const handleVideoGenerate = (options: VideoOptions) => {
+    setShowVideoOptions(false);
+    const params = new URLSearchParams({
+      resolution: options.resolution,
+      fps: String(options.fps),
+      speed: String(options.speed),
+      orientation: options.orientation,
+    });
+    router.push(`/generate-video/${activity.id}?${params.toString()}` as any);
+  };
 
   return (
-    <TouchableOpacity
-      className="rounded-2xl border overflow-hidden"
-      style={{ backgroundColor: colors.card, borderColor: colors.border }}
-      onPress={() => setExpanded(!expanded)}
-      activeOpacity={0.9}
-    >
-      <View className="flex-row items-center p-3 gap-3">
-        <LinearGradient colors={gradient} className="w-[52px] h-[52px] rounded-xl items-center justify-center shrink-0">
-          <Icon name={TYPE_ICON[activity.type]} size={20} color="white" />
-        </LinearGradient>
+    <>
+      <TouchableOpacity
+        className="rounded-2xl border overflow-hidden"
+        style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        onPress={() => setExpanded(!expanded)}
+        activeOpacity={0.9}
+      >
+        <View className="flex-row items-center p-3 gap-3">
+          <LinearGradient colors={gradient} className="w-[52px] h-[52px] rounded-xl items-center justify-center shrink-0">
+            <Icon name={TYPE_ICON[activity.type]} size={20} color="white" />
+          </LinearGradient>
 
-        <View className="flex-1">
-          <View className="flex-row items-center gap-1.5 mb-0.5">
-            <Text className="text-[15px] font-inter-bold flex-1" style={{ color: colors.foreground }}>
-              {getActivityName(activity)}
+          <View className="flex-1">
+            <View className="flex-row items-center gap-1.5 mb-0.5">
+              <Text className="text-[15px] font-inter-bold flex-1" style={{ color: colors.foreground }}>
+                {getActivityName(activity)}
+              </Text>
+              {hasVideo ? (
+                <TouchableOpacity
+                  className="flex-row items-center gap-[3px] px-[7px] py-[3px] rounded-[10px]"
+                  style={{ backgroundColor: `${colors.accent}18` }}
+                  onPress={() => router.push("/(tabs)/videos")}
+                >
+                  <Icon name="checkmark-circle" size={11} color={colors.accent} />
+                  <Text className="text-[10px] font-inter-semibold" style={{ color: colors.accent }}>Video Ready</Text>
+                </TouchableOpacity>
+              ) : (
+                <View
+                  className="flex-row items-center gap-[3px] px-[7px] py-[3px] rounded-[10px]"
+                  style={{ backgroundColor: `${colors.mutedForeground}12` }}
+                >
+                  <Icon name="videocam-outline" size={11} color={colors.mutedForeground} />
+                  <Text className="text-[10px] font-inter-regular" style={{ color: colors.mutedForeground }}>No Video</Text>
+                </View>
+              )}
+            </View>
+            <Text className="text-xs font-inter-regular mb-1.5" style={{ color: colors.mutedForeground }}>
+              {formatDate(activity.startTime)}
             </Text>
-            {activity.elevationGain > 100 && (
-              <View
-                className="flex-row items-center gap-[3px] px-[7px] py-[3px] rounded-[10px]"
-                style={{ backgroundColor: `${colors.trace}18` }}
-              >
-                <Icon name="videocam" size={11} color={colors.trace} />
-                <Text className="text-[10px] font-inter-semibold" style={{ color: colors.trace }}>Video</Text>
+            <View className="flex-row gap-2 flex-wrap">
+              <View className="flex-row items-center gap-[3px]">
+                <Icon name="map-outline" size={12} color={colors.mutedForeground} />
+                <Text className="text-[11px] font-inter-medium" style={{ color: colors.foreground }}>
+                  {(activity.distance / 1000).toFixed(1)} km
+                </Text>
               </View>
-            )}
-          </View>
-          <Text className="text-xs font-inter-regular mb-1.5" style={{ color: colors.mutedForeground }}>
-            {formatDate(activity.startTime)}
-          </Text>
-          <View className="flex-row gap-2 flex-wrap">
-            <View className="flex-row items-center gap-[3px]">
-              <Icon name="map-outline" size={12} color={colors.mutedForeground} />
-              <Text className="text-[11px] font-inter-medium" style={{ color: colors.foreground }}>
-                {(activity.distance / 1000).toFixed(1)} km
-              </Text>
-            </View>
-            <View className="flex-row items-center gap-[3px]">
-              <Icon name="timer-outline" size={12} color={colors.mutedForeground} />
-              <Text className="text-[11px] font-inter-medium" style={{ color: colors.foreground }}>
-                {formatDuration(activity.duration)}
-              </Text>
-            </View>
-            <View className="flex-row items-center gap-[3px]">
-              <Icon name="flash-outline" size={12} color={colors.mutedForeground} />
-              <Text className="text-[11px] font-inter-medium" style={{ color: colors.foreground }}>
-                {activity.avgSpeed.toFixed(1)} km/h
-              </Text>
+              <View className="flex-row items-center gap-[3px]">
+                <Icon name="timer-outline" size={12} color={colors.mutedForeground} />
+                <Text className="text-[11px] font-inter-medium" style={{ color: colors.foreground }}>
+                  {formatDuration(activity.duration)}
+                </Text>
+              </View>
+              <View className="flex-row items-center gap-[3px]">
+                <Icon name="flash-outline" size={12} color={colors.mutedForeground} />
+                <Text className="text-[11px] font-inter-medium" style={{ color: colors.foreground }}>
+                  {activity.avgSpeed.toFixed(1)} km/h
+                </Text>
+              </View>
             </View>
           </View>
+
+          <Icon
+            name={expanded ? "chevron-up" : "chevron-down"}
+            size={18}
+            color={colors.mutedForeground}
+          />
         </View>
 
-        <Icon
-          name={expanded ? "chevron-up" : "chevron-down"}
-          size={18}
-          color={colors.mutedForeground}
-        />
-      </View>
+        {expanded && (
+          <View
+            className="flex-row items-center justify-between px-3 py-2.5 border-t flex-wrap gap-2"
+            style={{ borderTopColor: colors.border }}
+          >
+            <View className="flex-row gap-4 shrink">
+              <View className="flex-row items-center gap-1.5">
+                <View
+                  className="w-7 h-7 rounded-lg items-center justify-center"
+                  style={{ backgroundColor: `${colors.primary}15` }}
+                >
+                  <Icon name="flash" size={14} color={colors.primary} />
+                </View>
+                <View>
+                  <Text className="text-[13px] font-inter-bold" style={{ color: colors.foreground }}>
+                    {activity.maxSpeed.toFixed(1)} km/h
+                  </Text>
+                  <Text className="text-[10px] font-inter-regular" style={{ color: colors.mutedForeground }}>
+                    max speed
+                  </Text>
+                </View>
+              </View>
+              <View className="flex-row items-center gap-1.5">
+                <View
+                  className="w-7 h-7 rounded-lg items-center justify-center"
+                  style={{ backgroundColor: `${colors.accent}15` }}
+                >
+                  <Icon name="trending-up" size={14} color={colors.accent} />
+                </View>
+                <View>
+                  <Text className="text-[13px] font-inter-bold" style={{ color: colors.foreground }}>
+                    +{activity.elevationGain}m
+                  </Text>
+                  <Text className="text-[10px] font-inter-regular" style={{ color: colors.mutedForeground }}>
+                    elevation
+                  </Text>
+                </View>
+              </View>
+            </View>
+            <View className="flex-row items-center gap-2">
+              <TouchableOpacity
+                className="flex-row items-center gap-[5px] px-3 py-2 rounded-full border"
+                style={{ borderColor: colors.border }}
+                onPress={() => router.push(`/activity/${activity.id}` as any)}
+              >
+                <Icon name="chevron-forward" size={13} color={colors.foreground} />
+                <Text className="text-xs font-inter-semibold" style={{ color: colors.foreground }}>Details</Text>
+              </TouchableOpacity>
+              {hasVideo ? (
+                <TouchableOpacity
+                  className="flex-row items-center gap-[5px] px-3.5 py-2 rounded-full"
+                  style={{ backgroundColor: colors.accent }}
+                  onPress={() => router.push("/(tabs)/videos")}
+                >
+                  <Icon name="play" size={14} color="white" />
+                  <Text className="text-white text-xs font-inter-semibold">Watch</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  className="flex-row items-center gap-[5px] px-3.5 py-2 rounded-full"
+                  style={{ backgroundColor: colors.primary }}
+                  onPress={() => setShowVideoOptions(true)}
+                >
+                  <Icon name="film" size={14} color="white" />
+                  <Text className="text-white text-xs font-inter-semibold">3D Video</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        )}
+      </TouchableOpacity>
 
-      {expanded && (
-        <View
-          className="flex-row items-center justify-between px-3 py-2.5 border-t flex-wrap gap-2"
-          style={{ borderTopColor: colors.border }}
-        >
-          <View className="flex-row gap-4 shrink">
-            <View className="flex-row items-center gap-1.5">
-              <View
-                className="w-7 h-7 rounded-lg items-center justify-center"
-                style={{ backgroundColor: `${colors.primary}15` }}
-              >
-                <Icon name="flash" size={14} color={colors.primary} />
-              </View>
-              <View>
-                <Text className="text-[13px] font-inter-bold" style={{ color: colors.foreground }}>
-                  {activity.maxSpeed.toFixed(1)} km/h
-                </Text>
-                <Text className="text-[10px] font-inter-regular" style={{ color: colors.mutedForeground }}>
-                  max speed
-                </Text>
-              </View>
-            </View>
-            <View className="flex-row items-center gap-1.5">
-              <View
-                className="w-7 h-7 rounded-lg items-center justify-center"
-                style={{ backgroundColor: `${colors.accent}15` }}
-              >
-                <Icon name="trending-up" size={14} color={colors.accent} />
-              </View>
-              <View>
-                <Text className="text-[13px] font-inter-bold" style={{ color: colors.foreground }}>
-                  +{activity.elevationGain}m
-                </Text>
-                <Text className="text-[10px] font-inter-regular" style={{ color: colors.mutedForeground }}>
-                  elevation
-                </Text>
-              </View>
-            </View>
-          </View>
-          <View className="flex-row items-center gap-2">
-            <TouchableOpacity
-              className="flex-row items-center gap-[5px] px-3 py-2 rounded-full border"
-              style={{ borderColor: colors.border }}
-              onPress={() => router.push(`/activity/${activity.id}` as any)}
-            >
-              <Icon name="chevron-forward" size={13} color={colors.foreground} />
-              <Text className="text-xs font-inter-semibold" style={{ color: colors.foreground }}>Details</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="flex-row items-center gap-[5px] px-3.5 py-2 rounded-full"
-              style={{ backgroundColor: colors.primary }}
-            >
-              <Icon name="play" size={14} color="white" />
-              <Text className="text-white text-xs font-inter-semibold">Video</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-    </TouchableOpacity>
+      <VideoOptionsModal
+        visible={showVideoOptions}
+        onClose={() => setShowVideoOptions(false)}
+        onGenerate={handleVideoGenerate}
+        activityName={`${getActivityName(activity)} · ${(activity.distance / 1000).toFixed(1)} km`}
+      />
+    </>
   );
 }
 
@@ -191,6 +237,7 @@ export default function HistoryScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { activities } = useActivities();
+  const { videos } = useVideos();
   const [filter, setFilter] = useState<FilterType>("all");
   const isWeb = Platform.OS === "web";
 
@@ -218,7 +265,7 @@ export default function HistoryScreen() {
         {[
           { label: "Distance", value: `${totalDist.toFixed(1)} km` },
           { label: "Top Speed", value: `${topSpeed.toFixed(1)} km/h` },
-          { label: "Videos", value: String(activities.length) },
+          { label: "Videos", value: String(videos.length) },
           { label: "Trips", value: String(activities.length) },
         ].map((s, i) => (
           <View

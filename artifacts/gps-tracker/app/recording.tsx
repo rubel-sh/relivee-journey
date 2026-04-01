@@ -6,6 +6,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Easing,
+  Modal,
   Platform,
   StyleSheet,
   Text,
@@ -17,6 +18,7 @@ import MapView, { Polyline, Circle, PROVIDER_DEFAULT } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Icon } from "@/components/Icon";
+import VideoOptionsModal, { VideoOptions } from "@/components/VideoOptionsModal";
 import { Activity, Coordinate, useActivities } from "@/context/ActivityContext";
 import { useColors } from "@/hooks/useColors";
 
@@ -87,6 +89,9 @@ export default function RecordingScreen() {
   const [pins, setPins] = useState<Coordinate[]>([]);
   const [screenLocked, setScreenLocked] = useState(false);
   const [lapFlash, setLapFlash] = useState<string | null>(null);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showVideoOptions, setShowVideoOptions] = useState(false);
+  const [savedActivityId, setSavedActivityId] = useState<string | null>(null);
 
   const mapRef = useRef<MapView>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -279,8 +284,9 @@ export default function RecordingScreen() {
   const handleStop = () => {
     stopAll();
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    const actId = Date.now().toString() + Math.random().toString(36).slice(2, 7);
     const activity: Activity = {
-      id: Date.now().toString() + Math.random().toString(36).slice(2, 7),
+      id: actId,
       type: activityType,
       startTime: startTimeRef.current,
       endTime: Date.now(),
@@ -292,7 +298,31 @@ export default function RecordingScreen() {
       coordinates: coords.length > 0 ? coords : [INITIAL_REGION],
     };
     addActivity(activity);
+    setSavedActivityId(actId);
+    setShowSaveModal(true);
+  };
+
+  const handleSaveOnly = () => {
+    setShowSaveModal(false);
     router.back();
+  };
+
+  const handleGenerateFromModal = () => {
+    setShowSaveModal(false);
+    setShowVideoOptions(true);
+  };
+
+  const handleVideoGenerate = (options: VideoOptions) => {
+    setShowVideoOptions(false);
+    if (savedActivityId) {
+      const params = new URLSearchParams({
+        resolution: options.resolution,
+        fps: String(options.fps),
+        speed: String(options.speed),
+        orientation: options.orientation,
+      });
+      router.replace(`/generate-video/${savedActivityId}?${params.toString()}` as any);
+    }
   };
 
   const isWeb = Platform.OS === "web";
@@ -753,6 +783,77 @@ export default function RecordingScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        visible={showSaveModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleSaveOnly}
+      >
+        <View className="flex-1 items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
+          <View className="mx-6 rounded-3xl overflow-hidden" style={{ backgroundColor: colors.card, width: 320 }}>
+            <LinearGradient
+              colors={cfg.gradient}
+              className="items-center pt-8 pb-6 px-6"
+            >
+              <View className="w-16 h-16 rounded-full bg-white/20 items-center justify-center mb-3">
+                <Icon name="checkmark-circle" size={36} color="white" />
+              </View>
+              <Text className="text-white text-[20px] font-inter-bold">Activity Saved!</Text>
+              <Text className="text-white/80 text-[13px] font-inter-regular mt-1 text-center">
+                {(distance / 1000).toFixed(2)} km · {formatDuration(duration)}
+              </Text>
+            </LinearGradient>
+
+            <View className="px-5 py-5 gap-3">
+              <Text className="text-[14px] font-inter-semibold text-center" style={{ color: colors.foreground }}>
+                Generate a 3D video replay?
+              </Text>
+              <Text className="text-[12px] font-inter-regular text-center" style={{ color: colors.mutedForeground }}>
+                You can also generate videos later from the History or Videos tab
+              </Text>
+
+              <TouchableOpacity
+                className="rounded-2xl overflow-hidden mt-1"
+                onPress={handleGenerateFromModal}
+                activeOpacity={0.85}
+              >
+                <LinearGradient
+                  colors={["#088395", "#066B7A"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  className="flex-row items-center justify-center gap-2.5 py-3.5"
+                >
+                  <Icon name="film" size={18} color="white" />
+                  <Text className="text-white text-[15px] font-inter-bold">Generate 3D Video</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="flex-row items-center justify-center gap-2 py-3 rounded-2xl border"
+                style={{ borderColor: colors.border }}
+                onPress={handleSaveOnly}
+                activeOpacity={0.8}
+              >
+                <Icon name="download" size={16} color={colors.foreground} />
+                <Text className="text-[14px] font-inter-semibold" style={{ color: colors.foreground }}>
+                  Save for Later
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <VideoOptionsModal
+        visible={showVideoOptions}
+        onClose={() => {
+          setShowVideoOptions(false);
+          router.back();
+        }}
+        onGenerate={handleVideoGenerate}
+        activityName={`${TYPE_CONFIG[activityType].label} · ${(distance / 1000).toFixed(2)} km`}
+      />
     </View>
   );
 }

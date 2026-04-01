@@ -1,6 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
   Alert,
   Dimensions,
@@ -14,6 +14,7 @@ import Svg, { Path } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Icon } from "@/components/Icon";
+import VideoOptionsModal, { VideoOptions } from "@/components/VideoOptionsModal";
 import { Activity, Coordinate, useActivities } from "@/context/ActivityContext";
 import { GeneratedVideo, useVideos } from "@/context/VideoContext";
 import { useColors } from "@/hooks/useColors";
@@ -203,6 +204,7 @@ function GeneratedVideoCard({
 function ReplayCard({ activity }: { activity: Activity }) {
   const colors = useColors();
   const { getVideoForActivity } = useVideos();
+  const [showOptions, setShowOptions] = useState(false);
   const gradient = (TYPE_GRADIENT[activity.type] ?? ["#6D9E51", "#088395"]) as [string, string];
   const label = TYPE_LABEL[activity.type] ?? "Activity";
   const tod = getTimeOfDay(activity.startTime);
@@ -213,102 +215,118 @@ function ReplayCard({ activity }: { activity: Activity }) {
     router.push(`/video-replay/${activity.id}`);
   };
 
-  const handleGenerate = () => {
-    router.push(`/generate-video/${activity.id}`);
+  const handleGenerate = (options: VideoOptions) => {
+    setShowOptions(false);
+    const params = new URLSearchParams({
+      resolution: options.resolution,
+      fps: String(options.fps),
+      speed: String(options.speed),
+      orientation: options.orientation,
+    });
+    router.push(`/generate-video/${activity.id}?${params.toString()}` as any);
   };
 
   return (
-    <TouchableOpacity
-      className="flex-1 rounded-2xl border overflow-hidden"
-      style={{ backgroundColor: colors.card, borderColor: colors.border, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 3 }}
-      activeOpacity={0.85}
-      onPress={handleReplay}
-    >
-      <LinearGradient colors={gradient} style={{ width: "100%", height: THUMB_HEIGHT }}>
-        <View className="absolute top-2 left-2 w-[26px] h-[26px] rounded-lg bg-black/[0.28] items-center justify-center">
-          <Icon name={TYPE_ICON[activity.type]} size={14} color="rgba(255,255,255,0.9)" />
-        </View>
-
-        {miniPath && (
-          <View className="absolute inset-0 items-center justify-center" style={{ opacity: 0.35 }}>
-            <Svg width={MINI_W} height={MINI_H}>
-              <Path
-                d={miniPath}
-                fill="none"
-                stroke="white"
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </Svg>
+    <>
+      <TouchableOpacity
+        className="flex-1 rounded-2xl border overflow-hidden"
+        style={{ backgroundColor: colors.card, borderColor: colors.border, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 3 }}
+        activeOpacity={0.85}
+        onPress={handleReplay}
+      >
+        <LinearGradient colors={gradient} style={{ width: "100%", height: THUMB_HEIGHT }}>
+          <View className="absolute top-2 left-2 w-[26px] h-[26px] rounded-lg bg-black/[0.28] items-center justify-center">
+            <Icon name={TYPE_ICON[activity.type]} size={14} color="rgba(255,255,255,0.9)" />
           </View>
-        )}
 
-        <View className="absolute inset-0 items-center justify-center">
-          <View className="w-10 h-10 rounded-full bg-black/[0.38] items-center justify-center border-[1.5px] border-white/40">
-            <Icon name="play" size={18} color="white" />
-          </View>
-        </View>
+          {miniPath && (
+            <View className="absolute inset-0 items-center justify-center" style={{ opacity: 0.35 }}>
+              <Svg width={MINI_W} height={MINI_H}>
+                <Path
+                  d={miniPath}
+                  fill="none"
+                  stroke="white"
+                  strokeWidth={2.5}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </Svg>
+            </View>
+          )}
 
-        <View className="absolute bottom-1.5 left-1.5 right-1.5 flex-row justify-between items-center">
-          <View className="flex-row items-center gap-[3px] bg-black/[0.45] px-1.5 py-[3px] rounded-md">
-            <Icon name="navigate" size={9} color="white" />
-            <Text className="text-white text-[9px] font-inter-bold">{activity.coordinates.length} pts</Text>
+          <View className="absolute inset-0 items-center justify-center">
+            <View className="w-10 h-10 rounded-full bg-black/[0.38] items-center justify-center border-[1.5px] border-white/40">
+              <Icon name="play" size={18} color="white" />
+            </View>
           </View>
-          <Text className="text-white text-[10px] font-inter-semibold bg-black/[0.45] px-1.5 py-[3px] rounded-md">
-            {formatDuration(activity.duration)}
+
+          <View className="absolute bottom-1.5 left-1.5 right-1.5 flex-row justify-between items-center">
+            <View className="flex-row items-center gap-[3px] bg-black/[0.45] px-1.5 py-[3px] rounded-md">
+              <Icon name="navigate" size={9} color="white" />
+              <Text className="text-white text-[9px] font-inter-bold">{activity.coordinates.length} pts</Text>
+            </View>
+            <Text className="text-white text-[10px] font-inter-semibold bg-black/[0.45] px-1.5 py-[3px] rounded-md">
+              {formatDuration(activity.duration)}
+            </Text>
+          </View>
+        </LinearGradient>
+
+        <View className="p-2.5 gap-1">
+          <Text className="text-[13px] font-inter-bold leading-[17px]" style={{ color: colors.foreground }} numberOfLines={1}>
+            {tod} {label}
           </Text>
-        </View>
-      </LinearGradient>
+          <Text className="text-[11px] font-inter-regular" style={{ color: colors.mutedForeground }} numberOfLines={1}>
+            {new Date(activity.startTime).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            })}
+          </Text>
 
-      <View className="p-2.5 gap-1">
-        <Text className="text-[13px] font-inter-bold leading-[17px]" style={{ color: colors.foreground }} numberOfLines={1}>
-          {tod} {label}
-        </Text>
-        <Text className="text-[11px] font-inter-regular" style={{ color: colors.mutedForeground }} numberOfLines={1}>
-          {new Date(activity.startTime).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          })}
-        </Text>
-
-        <View className="flex-row gap-2 mt-0.5">
-          <View className="flex-row items-center gap-[3px]">
-            <Icon name="map-outline" size={10} color={colors.mutedForeground} />
-            <Text className="text-[10px] font-inter-medium" style={{ color: colors.mutedForeground }}>
-              {(activity.distance / 1000).toFixed(1)} km
-            </Text>
+          <View className="flex-row gap-2 mt-0.5">
+            <View className="flex-row items-center gap-[3px]">
+              <Icon name="map-outline" size={10} color={colors.mutedForeground} />
+              <Text className="text-[10px] font-inter-medium" style={{ color: colors.mutedForeground }}>
+                {(activity.distance / 1000).toFixed(1)} km
+              </Text>
+            </View>
+            <View className="flex-row items-center gap-[3px]">
+              <Icon name="trending-up" size={10} color={colors.mutedForeground} />
+              <Text className="text-[10px] font-inter-medium" style={{ color: colors.mutedForeground }}>
+                +{activity.elevationGain}m
+              </Text>
+            </View>
           </View>
-          <View className="flex-row items-center gap-[3px]">
-            <Icon name="trending-up" size={10} color={colors.mutedForeground} />
-            <Text className="text-[10px] font-inter-medium" style={{ color: colors.mutedForeground }}>
-              +{activity.elevationGain}m
-            </Text>
-          </View>
-        </View>
 
-        <View className="flex-row gap-2 mt-1.5">
-          <TouchableOpacity
-            className="flex-1 flex-row items-center justify-center gap-1 py-[7px] rounded-[10px]"
-            style={{ backgroundColor: colors.primary }}
-            onPress={handleReplay}
-          >
-            <Icon name="play" size={11} color="white" />
-            <Text className="text-white text-[10px] font-inter-semibold">Replay</Text>
-          </TouchableOpacity>
-          {!hasVideo && (
+          <View className="flex-row gap-2 mt-1.5">
             <TouchableOpacity
               className="flex-1 flex-row items-center justify-center gap-1 py-[7px] rounded-[10px]"
-              style={{ backgroundColor: colors.accent }}
-              onPress={handleGenerate}
+              style={{ backgroundColor: colors.primary }}
+              onPress={handleReplay}
             >
-              <Icon name="film" size={11} color="white" />
-              <Text className="text-white text-[10px] font-inter-semibold">3D Video</Text>
+              <Icon name="play" size={11} color="white" />
+              <Text className="text-white text-[10px] font-inter-semibold">Replay</Text>
             </TouchableOpacity>
-          )}
+            {!hasVideo && (
+              <TouchableOpacity
+                className="flex-1 flex-row items-center justify-center gap-1 py-[7px] rounded-[10px]"
+                style={{ backgroundColor: colors.accent }}
+                onPress={() => setShowOptions(true)}
+              >
+                <Icon name="film" size={11} color="white" />
+                <Text className="text-white text-[10px] font-inter-semibold">3D Video</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+
+      <VideoOptionsModal
+        visible={showOptions}
+        onClose={() => setShowOptions(false)}
+        onGenerate={handleGenerate}
+        activityName={`${tod} ${label} · ${(activity.distance / 1000).toFixed(1)} km`}
+      />
+    </>
   );
 }
 

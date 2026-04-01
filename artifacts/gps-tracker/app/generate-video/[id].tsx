@@ -19,8 +19,46 @@ import { useColors } from "@/hooks/useColors";
 
 type Phase = "loading" | "generating" | "saving" | "done" | "error";
 
+const RESOLUTION_MAP: Record<string, { w: number; h: number }> = {
+  "720p": { w: 720, h: 720 },
+  "1080p": { w: 1080, h: 1080 },
+  "1440p": { w: 1440, h: 1440 },
+};
+
+const ORIENTATION_RATIOS: Record<string, { wRatio: number; hRatio: number }> = {
+  square: { wRatio: 1, hRatio: 1 },
+  portrait: { wRatio: 9, hRatio: 16 },
+  landscape: { wRatio: 16, hRatio: 9 },
+};
+
+function resolveVideoDimensions(
+  resolution: string,
+  orientation: string
+): { w: number; h: number } {
+  const base = RESOLUTION_MAP[resolution] || RESOLUTION_MAP["1080p"];
+  const ratio = ORIENTATION_RATIOS[orientation] || ORIENTATION_RATIOS["square"];
+  if (ratio.wRatio === ratio.hRatio) return { w: base.w, h: base.h };
+  const maxDim = base.w;
+  if (ratio.wRatio > ratio.hRatio) {
+    return { w: maxDim, h: Math.round(maxDim * (ratio.hRatio / ratio.wRatio)) };
+  }
+  return { w: Math.round(maxDim * (ratio.wRatio / ratio.hRatio)), h: maxDim };
+}
+
 export default function GenerateVideoScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{
+    id: string;
+    resolution?: string;
+    fps?: string;
+    speed?: string;
+    orientation?: string;
+  }>();
+  const { id } = params;
+  const videoResolution = params.resolution || "1080p";
+  const videoFps = parseInt(params.fps || "30", 10);
+  const videoSpeed = parseFloat(params.speed || "1");
+  const videoOrientation = params.orientation || "square";
+  const dims = resolveVideoDimensions(videoResolution, videoOrientation);
   const { activities } = useActivities();
   const { addVideo, setIsGenerating } = useVideos();
   const colors = useColors();
@@ -62,6 +100,10 @@ export default function GenerateVideoScreen() {
         elevationGain: activity.elevationGain,
         avgSpeed: activity.avgSpeed,
         videoDurationSec: 20,
+        videoWidth: dims.w,
+        videoHeight: dims.h,
+        videoFps,
+        playbackSpeed: videoSpeed,
       })
     : "";
 

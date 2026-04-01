@@ -1,6 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Alert,
   Dimensions,
@@ -13,6 +13,7 @@ import Svg, { Circle, Path, Defs, LinearGradient as SvgGradient, Stop } from "re
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Icon } from "@/components/Icon";
+import VideoOptionsModal, { VideoOptions } from "@/components/VideoOptionsModal";
 import { Activity, Coordinate, useActivities } from "@/context/ActivityContext";
 import { useVideos } from "@/context/VideoContext";
 import { useColors } from "@/hooks/useColors";
@@ -112,8 +113,22 @@ export default function ActivityDetailScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const [deleting, setDeleting] = useState(false);
+  const [showVideoOptions, setShowVideoOptions] = useState(false);
   const existingVideo = id ? getVideoForActivity(id) : undefined;
   const currentlyGenerating = isGenerating === id;
+
+  const handleVideoGenerate = useCallback((options: VideoOptions) => {
+    setShowVideoOptions(false);
+    if (id) {
+      const params = new URLSearchParams({
+        resolution: options.resolution,
+        fps: String(options.fps),
+        speed: String(options.speed),
+        orientation: options.orientation,
+      });
+      router.push(`/generate-video/${id}?${params.toString()}` as any);
+    }
+  }, [id]);
 
   const activity = activities.find((a) => a.id === id);
 
@@ -367,7 +382,7 @@ export default function ActivityDetailScreen() {
                   }}
                   onPress={() => {
                     if (!currentlyGenerating) {
-                      router.push(`/generate-video/${activity.id}`);
+                      setShowVideoOptions(true);
                     }
                   }}
                   activeOpacity={0.8}
@@ -401,6 +416,13 @@ export default function ActivityDetailScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <VideoOptionsModal
+        visible={showVideoOptions}
+        onClose={() => setShowVideoOptions(false)}
+        onGenerate={handleVideoGenerate}
+        activityName={`${cfg.label} · ${(activity.distance / 1000).toFixed(1)} km`}
+      />
     </View>
   );
 }

@@ -15,11 +15,11 @@ app/
   recording.tsx            # Full-screen recording screen (full-screen modal)
   activity/[id].tsx        # Activity detail screen with route SVG + stats
   video-replay/[id].tsx    # Video replay screen — WebView + Leaflet.js + OpenStreetMap
-  generate-video/[id].tsx  # 3D video generation screen — Three.js + OSM tiles + MediaRecorder
+  generate-video/[id].tsx  # 3D video generation screen — Three.js + OSM tiles + MediaRecorder (accepts resolution/fps/speed/orientation query params)
   (tabs)/
     _layout.tsx            # Tab layout using CustomTabBar
     index.tsx              # Dashboard — weekly stats + recent activities
-    history.tsx            # Activity history with filter pills
+    history.tsx            # Activity history with filter pills + video generated indicators
     videos.tsx             # Journey Videos — generated 3D videos + replay cards with generate buttons
     profile.tsx            # Profile + settings
 
@@ -30,8 +30,9 @@ context/
 components/
   Icon.tsx                 # SVG icon wrapper mapping Ionicons names to lucide-react-native components
   CustomTabBar.tsx         # Inline 5-slot tab bar: Dashboard, History, FAB (record), Videos, Profile
+  VideoOptionsModal.tsx    # Reusable bottom sheet modal for video settings (resolution, fps, speed, orientation)
   replay-template.ts       # HTML template for Leaflet.js route replay on OpenStreetMap tiles
-  video-generator-template.ts # Three.js HTML template for 3D flyover video generation
+  video-generator-template.ts # Three.js HTML template for 3D flyover video generation (configurable W/H/FPS/speed)
 
 constants/
   colors.ts                # Design tokens (primary #6D9E51, bg #EAEFEF, text #262626, trace #982598, accent #088395)

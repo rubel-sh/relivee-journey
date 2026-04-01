@@ -9,6 +9,10 @@ interface VideoGenConfig {
   elevationGain: number;
   avgSpeed: number;
   videoDurationSec?: number;
+  videoWidth?: number;
+  videoHeight?: number;
+  videoFps?: number;
+  playbackSpeed?: number;
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -38,6 +42,10 @@ export function buildVideoGeneratorHTML(config: VideoGenConfig): string {
     elevationGain,
     avgSpeed,
     videoDurationSec = 20,
+    videoWidth = 720,
+    videoHeight = 720,
+    videoFps = 30,
+    playbackSpeed = 1,
   } = config;
 
   const routeColor = TYPE_COLORS[activityType] || "#6D9E51";
@@ -266,7 +274,7 @@ canvas{display:block}
     const tileCanvas = await loadTiles();
     setProgress(40, 'Building 3D scene...', 'Creating terrain and route');
 
-    const W = 720, H = 720;
+    const W = ${videoWidth}, H = ${videoHeight};
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, alpha: false });
     renderer.setSize(W, H);
     renderer.setPixelRatio(1);
@@ -415,8 +423,9 @@ canvas{display:block}
       overlayCtx.fillRect(0, progY, W * t, 4);
     }
 
-    const FPS = 30;
-    const TOTAL_FRAMES = VIDEO_DURATION * FPS;
+    const FPS = ${videoFps};
+    const PLAYBACK_SPEED = ${playbackSpeed};
+    const TOTAL_FRAMES = Math.round(VIDEO_DURATION * FPS / PLAYBACK_SPEED);
 
     let curve;
     if (routePoints.length >= 2) {
