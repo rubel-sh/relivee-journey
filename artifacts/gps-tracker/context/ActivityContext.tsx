@@ -33,7 +33,6 @@ interface ActivityContextType {
 }
 
 const STORAGE_KEY = "@journey_activities_v2";
-const SEEDED_KEY = "@journey_seeded_v2";
 
 const now = Date.now();
 
@@ -120,18 +119,16 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
-        const seeded = await AsyncStorage.getItem(SEEDED_KEY);
         const stored = await AsyncStorage.getItem(STORAGE_KEY);
-        if (!seeded) {
-          await AsyncStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify(SAMPLE_ACTIVITIES)
-          );
-          await AsyncStorage.setItem(SEEDED_KEY, "true");
-          setActivities(SAMPLE_ACTIVITIES);
-        } else if (stored) {
-          setActivities(JSON.parse(stored));
+        if (stored) {
+          const parsed = JSON.parse(stored) as Activity[];
+          if (parsed.length > 0) {
+            setActivities(parsed);
+            return;
+          }
         }
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(SAMPLE_ACTIVITIES));
+        setActivities(SAMPLE_ACTIVITIES);
       } catch (e) {
         console.warn("Failed to load activities:", e);
       }

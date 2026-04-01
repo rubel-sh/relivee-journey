@@ -1,6 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import {
+  Dimensions,
   Platform,
   ScrollView,
   StyleSheet,
@@ -8,12 +9,18 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Svg, { Circle as SvgCircle, Path } from "react-native-svg";
+import Svg, { Circle as SvgCircle, Path, Rect } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Icon } from "@/components/Icon";
 import { Activity, useActivities } from "@/context/ActivityContext";
 import { useColors } from "@/hooks/useColors";
+
+const { width: SCREEN_W } = Dimensions.get("window");
+const GRID_PAD = 16;
+const GRID_GAP = 10;
+const CARD_W = (SCREEN_W - GRID_PAD * 2 - GRID_GAP) / 2;
+const THUMB_H = Math.round(CARD_W * 0.9);
 
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -31,7 +38,7 @@ function getTimeOfDay(ts: number): string {
 }
 
 function getActivityLabel(type: Activity["type"]): string {
-  return { run: "Run", cycle: "Cycle", hike: "Trail Hike", walk: "Walk" }[type];
+  return { run: "Run", cycle: "Cycle", hike: "Hike", walk: "Walk" }[type];
 }
 
 function getActivityName(a: Activity): string {
@@ -44,16 +51,7 @@ function getActivityDate(ts: number): string {
   const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
   if (diffDays === 0) return "Today";
   if (diffDays === 1) return "Yesterday";
-  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-}
-
-function formatPace(activity: Activity): string {
-  const distKm = activity.distance / 1000;
-  if (distKm < 0.01 || activity.duration < 1) return "--'--\"";
-  const secPerKm = activity.duration / distKm;
-  const min = Math.floor(secPerKm / 60);
-  const sec = Math.round(secPerKm % 60);
-  return `${min}'${String(sec).padStart(2, "0")}\"`;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 function hashStr(str: string): number {
@@ -72,31 +70,39 @@ function seededRand(seed: number) {
   };
 }
 
-function buildRoutePath(id: string, w: number, h: number): string {
+function buildRoute(id: string, w: number, h: number): {
+  path: string;
+  startX: number; startY: number;
+  endX: number; endY: number;
+} {
   const rand = seededRand(hashStr(id));
+  const N = 9;
   const pts: [number, number][] = [];
-  const N = 10;
   for (let i = 0; i < N; i++) {
     pts.push([
-      (i / (N - 1)) * w * 0.9 + w * 0.05,
-      h * 0.15 + rand() * h * 0.7,
+      w * 0.06 + (i / (N - 1)) * w * 0.88,
+      h * 0.2 + rand() * h * 0.55,
     ]);
   }
-  let d = `M ${pts[0][0]} ${pts[0][1]}`;
+  let d = `M ${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
   for (let i = 1; i < pts.length; i++) {
-    const mx = (pts[i - 1][0] + pts[i][0]) / 2;
-    const my = (pts[i - 1][1] + pts[i][1]) / 2;
-    d += ` Q ${pts[i - 1][0]} ${pts[i - 1][1]} ${mx} ${my}`;
+    const mx = ((pts[i - 1][0] + pts[i][0]) / 2).toFixed(1);
+    const my = ((pts[i - 1][1] + pts[i][1]) / 2).toFixed(1);
+    d += ` Q ${pts[i - 1][0].toFixed(1)} ${pts[i - 1][1].toFixed(1)} ${mx} ${my}`;
   }
-  d += ` L ${pts[pts.length - 1][0]} ${pts[pts.length - 1][1]}`;
-  return d;
+  d += ` L ${pts[N - 1][0].toFixed(1)} ${pts[N - 1][1].toFixed(1)}`;
+  return {
+    path: d,
+    startX: pts[0][0], startY: pts[0][1],
+    endX: pts[N - 1][0], endY: pts[N - 1][1],
+  };
 }
 
 const TYPE_GRADIENT: Record<Activity["type"], [string, string, string]> = {
-  run:   ["#B8D898", "#7DB55A", "#5A8A3C"],
-  cycle: ["#7DCFDF", "#3FAEC0", "#1E8A9E"],
-  hike:  ["#D4BC82", "#A08040", "#7A6020"],
-  walk:  ["#AABEBE", "#6E9090", "#4E7070"],
+  run:   ["#C8E0A8", "#7DB55A", "#4A7A30"],
+  cycle: ["#90D8E8", "#3FAEC0", "#1A7A90"],
+  hike:  ["#DEC898", "#B08040", "#7A5A20"],
+  walk:  ["#BCCECE", "#6E9090", "#3E6060"],
 };
 
 const TYPE_ICON: Record<Activity["type"], string> = {
@@ -106,155 +112,161 @@ const TYPE_ICON: Record<Activity["type"], string> = {
   walk: "footsteps",
 };
 
-const BANNER_H = 118;
-const BANNER_W = 340;
-
-function ActivityCard({ activity }: { activity: Activity }) {
+function ActivityCard({ activity, featured }: { activity: Activity; featured?: boolean }) {
   const colors = useColors();
   const gradient = TYPE_GRADIENT[activity.type];
-  const routePath = buildRoutePath(activity.id, BANNER_W, BANNER_H);
-  const startX = BANNER_W * 0.05;
-  const endX = BANNER_W * 0.95;
-  const pace = formatPace(activity);
+  const cardW = featured ? SCREEN_W - GRID_PAD * 2 : CARD_W;
+  const thumbH = featured ? Math.round(cardW * 0.52) : THUMB_H;
+  const route = buildRoute(activity.id, cardW, thumbH);
   const distKm = (activity.distance / 1000).toFixed(2);
-
-  const stats = [
-    {
-      icon: "timer-outline",
-      label: "Duration",
-      value: formatDuration(activity.duration),
-      color: gradient[1],
-    },
-    {
-      icon: "flash",
-      label: "Avg Speed",
-      value: `${activity.avgSpeed.toFixed(1)} km/h`,
-      color: "#088395",
-    },
-    {
-      icon: "trending-up",
-      label: "Elevation",
-      value: `+${activity.elevationGain} m`,
-      color: "#982598",
-    },
-    {
-      icon: "navigate",
-      label: "Pace",
-      value: pace,
-      color: "#F59E0B",
-    },
-  ];
+  const timeStr = new Date(activity.startTime).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card, shadowColor: gradient[2] }]}>
-      {/* Banner */}
-      <LinearGradient colors={gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.banner}>
-        {/* Route SVG */}
-        <Svg
-          width="100%"
-          height={BANNER_H}
+    <View style={[
+      styles.card,
+      { backgroundColor: colors.card, shadowColor: gradient[2], width: cardW },
+    ]}>
+      {/* Thumbnail */}
+      <View style={[styles.thumb, { height: thumbH }]}>
+        <LinearGradient
+          colors={gradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
-          viewBox={`0 0 ${BANNER_W} ${BANNER_H}`}
-          preserveAspectRatio="none"
+        />
+
+        {/* SVG route */}
+        <Svg
+          width={cardW}
+          height={thumbH}
+          style={StyleSheet.absoluteFill}
+          viewBox={`0 0 ${cardW} ${thumbH}`}
         >
           <Path
-            d={routePath}
-            stroke="rgba(255,255,255,0.18)"
-            strokeWidth={4}
+            d={route.path}
+            stroke="rgba(255,255,255,0.22)"
+            strokeWidth={featured ? 5 : 3.5}
             fill="none"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
           <Path
-            d={routePath}
-            stroke="rgba(255,255,255,0.55)"
-            strokeWidth={2}
+            d={route.path}
+            stroke="rgba(255,255,255,0.7)"
+            strokeWidth={featured ? 2 : 1.5}
             fill="none"
             strokeLinecap="round"
             strokeLinejoin="round"
-            strokeDasharray="6 5"
+            strokeDasharray="5 4"
           />
-          <SvgCircle cx={startX} cy={BANNER_H * 0.5} r={5} fill="rgba(255,255,255,0.9)" />
-          <SvgCircle cx={endX} cy={BANNER_H * 0.5} r={7} fill="white" fillOpacity={0.3} />
-          <SvgCircle cx={endX} cy={BANNER_H * 0.5} r={4} fill="white" />
+          <SvgCircle
+            cx={route.startX}
+            cy={route.startY}
+            r={featured ? 5 : 4}
+            fill="rgba(255,255,255,0.9)"
+          />
+          <SvgCircle
+            cx={route.endX}
+            cy={route.endY}
+            r={featured ? 8 : 6}
+            fill="rgba(255,255,255,0.25)"
+          />
+          <SvgCircle
+            cx={route.endX}
+            cy={route.endY}
+            r={featured ? 4.5 : 3.5}
+            fill="white"
+          />
+          {/* Bottom scrim for text legibility */}
+          <Rect
+            x={0}
+            y={thumbH * 0.58}
+            width={cardW}
+            height={thumbH * 0.42}
+            fill="rgba(0,0,0,0.38)"
+          />
         </Svg>
 
-        {/* Top row */}
-        <View style={styles.bannerTop}>
-          <View style={styles.activityBadge}>
-            <Icon name={TYPE_ICON[activity.type]} size={14} color="white" />
-            <Text style={styles.activityBadgeText}>{getActivityLabel(activity.type)}</Text>
+        {/* Top badges */}
+        <View style={styles.thumbTop}>
+          <View style={styles.typeBadge}>
+            <Icon name={TYPE_ICON[activity.type]} size={featured ? 13 : 11} color="white" />
+            {featured && (
+              <Text style={styles.typeBadgeText}>{getActivityLabel(activity.type)}</Text>
+            )}
           </View>
-          <View style={styles.videoBadge}>
-            <Icon name="videocam" size={10} color="white" />
-            <Text style={styles.videoBadgeText}>4K</Text>
+          <View style={styles.fourKBadge}>
+            <Icon name="videocam" size={9} color="white" />
+            <Text style={styles.fourKText}>4K</Text>
           </View>
         </View>
 
-        {/* Bottom row */}
-        <View style={styles.bannerBottom}>
-          <View>
-            <Text style={styles.bannerTitle}>{getActivityName(activity)}</Text>
-            <Text style={styles.bannerDate}>
-              {getActivityDate(activity.startTime)} ·{" "}
-              {new Date(activity.startTime).toLocaleTimeString("en-US", {
-                hour: "numeric",
-                minute: "2-digit",
-              })}
-            </Text>
-          </View>
-          <View style={styles.distBadge}>
-            <Text style={styles.distValue}>{distKm}</Text>
-            <Text style={styles.distUnit}>km</Text>
-          </View>
+        {/* Distance overlay — bottom of thumbnail */}
+        <View style={styles.thumbBottom}>
+          <Text style={[styles.distOverlay, { fontSize: featured ? 28 : 22 }]}>
+            {distKm}
+            <Text style={styles.distOverlayUnit}> km</Text>
+          </Text>
         </View>
-      </LinearGradient>
-
-      {/* Stats snapshot grid */}
-      <View style={[styles.statsGrid, { borderBottomColor: colors.border }]}>
-        {stats.map((s, i) => (
-          <View
-            key={s.label}
-            style={[
-              styles.statCell,
-              i % 2 === 0 && { borderRightWidth: 1, borderRightColor: colors.border },
-              i < 2 && { borderBottomWidth: 1, borderBottomColor: colors.border },
-            ]}
-          >
-            <View style={styles.statCellTop}>
-              <View style={[styles.statIconDot, { backgroundColor: `${s.color}18` }]}>
-                <Icon name={s.icon} size={11} color={s.color} />
-              </View>
-              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>
-                {s.label}
-              </Text>
-            </View>
-            <Text style={[styles.statValue, { color: colors.foreground }]}>{s.value}</Text>
-          </View>
-        ))}
       </View>
 
-      {/* Footer actions */}
-      <View style={styles.cardFooter}>
-        <TouchableOpacity
-          style={[styles.playBtn, { backgroundColor: gradient[1] }]}
-          activeOpacity={0.85}
-        >
-          <Icon name="play" size={13} color="white" />
-          <Text style={styles.playBtnText}>Play Video</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.shareBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
-          activeOpacity={0.8}
-        >
-          <Icon name="share-outline" size={16} color={gradient[1]} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.shareBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
-          activeOpacity={0.8}
-        >
-          <Icon name="ellipsis-vertical" size={16} color={colors.mutedForeground} />
-        </TouchableOpacity>
+      {/* Info strip */}
+      <View style={[styles.infoStrip, { backgroundColor: colors.card }]}>
+        <Text style={[styles.actName, { color: colors.foreground }]} numberOfLines={1}>
+          {getActivityName(activity)}
+        </Text>
+        <Text style={[styles.actDate, { color: colors.mutedForeground }]}>
+          {getActivityDate(activity.startTime)} · {timeStr}
+        </Text>
+
+        {/* Stats row */}
+        <View style={styles.miniStats}>
+          <View style={styles.miniStat}>
+            <Icon name="timer-outline" size={11} color={gradient[1]} />
+            <Text style={[styles.miniStatText, { color: colors.foreground }]}>
+              {formatDuration(activity.duration)}
+            </Text>
+          </View>
+          <View style={[styles.miniStatDivider, { backgroundColor: colors.border }]} />
+          <View style={styles.miniStat}>
+            <Icon name="flash" size={11} color="#088395" />
+            <Text style={[styles.miniStatText, { color: colors.foreground }]}>
+              {activity.avgSpeed.toFixed(1)}<Text style={{ color: colors.mutedForeground, fontSize: 9 }}> km/h</Text>
+            </Text>
+          </View>
+          {featured && (
+            <>
+              <View style={[styles.miniStatDivider, { backgroundColor: colors.border }]} />
+              <View style={styles.miniStat}>
+                <Icon name="trending-up" size={11} color="#982598" />
+                <Text style={[styles.miniStatText, { color: colors.foreground }]}>
+                  +{activity.elevationGain}<Text style={{ color: colors.mutedForeground, fontSize: 9 }}> m</Text>
+                </Text>
+              </View>
+            </>
+          )}
+        </View>
+
+        {/* Action row */}
+        <View style={styles.actionRow}>
+          <TouchableOpacity
+            style={[styles.playPill, { backgroundColor: gradient[1] }]}
+            activeOpacity={0.85}
+          >
+            <Icon name="play" size={10} color="white" />
+            <Text style={styles.playPillText}>Play</Text>
+          </TouchableOpacity>
+          <View style={{ flex: 1 }} />
+          <TouchableOpacity style={[styles.iconBtn, { borderColor: colors.border }]} activeOpacity={0.7}>
+            <Icon name="share-outline" size={13} color={gradient[1]} />
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.iconBtn, { borderColor: colors.border }]} activeOpacity={0.7}>
+            <Icon name="ellipsis-horizontal" size={13} color={colors.mutedForeground} />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -273,7 +285,18 @@ export default function DashboardScreen() {
   const topSpeed = weekActivities.length > 0 ? Math.max(...weekActivities.map((a) => a.maxSpeed)) : 0;
   const weeklyGoal = 50;
   const progress = Math.min((totalDistKm / weeklyGoal) * 100, 100);
-  const recent = activities.slice(0, 5);
+
+  // First card is full-width "featured", rest go in 2-column pairs
+  const recent = activities.slice(0, 7);
+  const featured = recent[0];
+  const grid = recent.slice(1);
+
+  // Pair grid items into rows of 2
+  const rows: Activity[][] = [];
+  for (let i = 0; i < grid.length; i += 2) {
+    rows.push(grid.slice(i, i + 2));
+  }
+
   const topPadding = isWeb ? 67 : insets.top;
 
   return (
@@ -320,7 +343,7 @@ export default function DashboardScreen() {
                     Math.floor((totalDuration % 3600) / 60)
                   ).padStart(2, "0")}m`,
                 },
-                { label: "Top Speed", value: topSpeed.toFixed(1) },
+                { label: "Top Speed", value: `${topSpeed.toFixed(1)}` },
                 { label: "Videos", value: String(weekActivities.length) },
               ].map((s) => (
                 <View key={s.label} style={styles.weekStatItem}>
@@ -337,7 +360,7 @@ export default function DashboardScreen() {
               <View
                 style={[
                   styles.progressFill,
-                  { width: `${progress}%` as any, backgroundColor: colors.primary },
+                  { width: `${progress}%` as any, backgroundColor: "#6D9E51" },
                 ]}
               />
             </View>
@@ -360,17 +383,27 @@ export default function DashboardScreen() {
             <View style={[styles.emptyIcon, { backgroundColor: `${colors.primary}12` }]}>
               <Icon name="map-outline" size={36} color={colors.primary} />
             </View>
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
-              No activities yet
-            </Text>
+            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No activities yet</Text>
             <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
               Tap the record button to start your first journey!
             </Text>
           </View>
         ) : (
-          <View style={{ gap: 16, paddingHorizontal: 16 }}>
-            {recent.map((a) => (
-              <ActivityCard key={a.id} activity={a} />
+          <View style={styles.gridOuter}>
+            {/* Featured full-width card */}
+            {featured && (
+              <ActivityCard activity={featured} featured />
+            )}
+
+            {/* 2-column grid rows */}
+            {rows.map((row, ri) => (
+              <View key={ri} style={styles.gridRow}>
+                {row.map((a) => (
+                  <ActivityCard key={a.id} activity={a} />
+                ))}
+                {/* Spacer if odd item in last row */}
+                {row.length === 1 && <View style={{ width: CARD_W }} />}
+              </View>
             ))}
           </View>
         )}
@@ -461,113 +494,133 @@ const styles = StyleSheet.create({
   seeAllBtn: { flexDirection: "row", alignItems: "center", gap: 2 },
   seeAll: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
 
-  /* ─── Activity Card ─── */
-  card: {
-    borderRadius: 20,
-    overflow: "hidden",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 6,
+  /* ─── Grid layout ─── */
+  gridOuter: {
+    paddingHorizontal: GRID_PAD,
+    gap: GRID_GAP,
+  },
+  gridRow: {
+    flexDirection: "row",
+    gap: GRID_GAP,
   },
 
-  banner: {
-    height: BANNER_H,
-    padding: 12,
+  /* ─── Activity Card ─── */
+  card: {
+    borderRadius: 16,
+    overflow: "hidden",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.14,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  thumb: {
+    width: "100%",
+    overflow: "hidden",
     justifyContent: "space-between",
   },
-  bannerTop: {
+  thumbTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    padding: 8,
   },
-  activityBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    backgroundColor: "rgba(0,0,0,0.22)",
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 20,
-  },
-  activityBadgeText: { color: "white", fontSize: 11, fontFamily: "Inter_600SemiBold" },
-  videoBadge: {
+  typeBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "rgba(0,0,0,0.22)",
-    paddingHorizontal: 8,
-    paddingVertical: 5,
+    backgroundColor: "rgba(0,0,0,0.28)",
+    paddingHorizontal: 7,
+    paddingVertical: 4,
     borderRadius: 20,
   },
-  videoBadgeText: { color: "white", fontSize: 10, fontFamily: "Inter_700Bold" },
-  bannerBottom: {
+  typeBadgeText: {
+    color: "white",
+    fontSize: 10,
+    fontFamily: "Inter_600SemiBold",
+  },
+  fourKBadge: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-  },
-  bannerTitle: { color: "white", fontSize: 16, fontFamily: "Inter_700Bold", marginBottom: 2 },
-  bannerDate: { color: "rgba(255,255,255,0.75)", fontSize: 11, fontFamily: "Inter_400Regular" },
-  distBadge: {
-    alignItems: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.22)",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 14,
-  },
-  distValue: { color: "white", fontSize: 20, fontFamily: "Inter_700Bold", lineHeight: 22 },
-  distUnit: { color: "rgba(255,255,255,0.8)", fontSize: 10, fontFamily: "Inter_500Medium" },
-
-  statsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    borderBottomWidth: 1,
-  },
-  statCell: {
-    width: "50%",
-    paddingHorizontal: 14,
-    paddingVertical: 11,
+    alignItems: "center",
     gap: 3,
-    backgroundColor: "white",
+    backgroundColor: "rgba(0,0,0,0.28)",
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderRadius: 20,
   },
-  statCellTop: {
+  fourKText: { color: "white", fontSize: 9, fontFamily: "Inter_700Bold" },
+  thumbBottom: {
+    padding: 8,
+    paddingBottom: 10,
+  },
+  distOverlay: {
+    color: "white",
+    fontFamily: "Inter_700Bold",
+  },
+  distOverlayUnit: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    color: "rgba(255,255,255,0.85)",
+  },
+
+  /* ─── Info strip ─── */
+  infoStrip: {
+    paddingHorizontal: 10,
+    paddingTop: 8,
+    paddingBottom: 8,
+    gap: 3,
+  },
+  actName: {
+    fontSize: 12,
+    fontFamily: "Inter_700Bold",
+    lineHeight: 16,
+  },
+  actDate: {
+    fontSize: 10,
+    fontFamily: "Inter_400Regular",
+    marginBottom: 4,
+  },
+  miniStats: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    marginBottom: 2,
+    marginBottom: 8,
   },
-  statIconDot: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  statLabel: { fontSize: 10, fontFamily: "Inter_500Medium" },
-  statValue: { fontSize: 15, fontFamily: "Inter_700Bold" },
-
-  cardFooter: {
+  miniStat: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: "white",
+    gap: 3,
   },
-  playBtn: {
-    flex: 1,
+  miniStatText: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+  },
+  miniStatDivider: {
+    width: 1,
+    height: 10,
+    borderRadius: 1,
+  },
+  actionRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
     gap: 6,
-    paddingVertical: 9,
-    borderRadius: 12,
   },
-  playBtnText: { color: "white", fontSize: 13, fontFamily: "Inter_600SemiBold" },
-  shareBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+  playPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  playPillText: {
+    color: "white",
+    fontSize: 10,
+    fontFamily: "Inter_600SemiBold",
+  },
+  iconBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
