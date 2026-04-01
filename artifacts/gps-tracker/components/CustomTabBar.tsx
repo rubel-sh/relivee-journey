@@ -5,7 +5,6 @@ import { router } from "expo-router";
 import React from "react";
 import {
   Platform,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -25,10 +24,7 @@ const TAB_CONFIG: Record<
   profile: { outline: "person-outline", filled: "person", label: "Profile" },
 };
 
-export function CustomTabBar({
-  state,
-  navigation,
-}: BottomTabBarProps) {
+export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
@@ -58,14 +54,17 @@ export function CustomTabBar({
 
   return (
     <View
-      style={[
-        styles.bar,
-        {
-          paddingBottom,
-          backgroundColor: colors.card,
-          borderTopColor: colors.border,
-        },
-      ]}
+      className="flex-row items-center border-t pt-2"
+      style={{
+        paddingBottom,
+        backgroundColor: colors.card,
+        borderTopColor: colors.border,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: -3 },
+        shadowOpacity: 0.06,
+        shadowRadius: 12,
+        elevation: 10,
+      }}
     >
       {leftRoutes.map((route, i) => {
         const isFocused = state.index === i;
@@ -73,7 +72,7 @@ export function CustomTabBar({
         return (
           <TouchableOpacity
             key={route.key}
-            style={styles.tab}
+            className="flex-1 items-center justify-center pt-1 gap-[3px] min-h-[50px]"
             onPress={() => onTabPress(route.name, route.key, i)}
             activeOpacity={0.7}
             testID={`tab-${route.name}`}
@@ -84,24 +83,20 @@ export function CustomTabBar({
               color={isFocused ? colors.primary : colors.mutedForeground}
             />
             <Text
-              style={[
-                styles.label,
-                { color: isFocused ? colors.primary : colors.mutedForeground },
-              ]}
+              className="text-[10px] font-inter-semibold"
+              style={{ color: isFocused ? colors.primary : colors.mutedForeground }}
             >
               {cfg?.label}
             </Text>
             {isFocused && (
-              <View
-                style={[styles.activeDot, { backgroundColor: colors.primary }]}
-              />
+              <View className="w-1 h-1 rounded-full mt-px" style={{ backgroundColor: colors.primary }} />
             )}
           </TouchableOpacity>
         );
       })}
 
       <TouchableOpacity
-        style={styles.tab}
+        className="flex-1 items-center justify-center pt-1 gap-[3px] min-h-[50px]"
         onPress={onFABPress}
         activeOpacity={0.85}
         testID="tab-record"
@@ -110,7 +105,8 @@ export function CustomTabBar({
           colors={[colors.primary, colors.accent]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={styles.fab}
+          className="w-[52px] h-[52px] rounded-[26px] items-center justify-center"
+          style={{ shadowColor: "#6D9E51", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 6 }}
         >
           <Icon name="play" size={22} color="white" />
         </LinearGradient>
@@ -123,7 +119,7 @@ export function CustomTabBar({
         return (
           <TouchableOpacity
             key={route.key}
-            style={styles.tab}
+            className="flex-1 items-center justify-center pt-1 gap-[3px] min-h-[50px]"
             onPress={() => onTabPress(route.name, route.key, actualIndex)}
             activeOpacity={0.7}
             testID={`tab-${route.name}`}
@@ -134,17 +130,13 @@ export function CustomTabBar({
               color={isFocused ? colors.primary : colors.mutedForeground}
             />
             <Text
-              style={[
-                styles.label,
-                { color: isFocused ? colors.primary : colors.mutedForeground },
-              ]}
+              className="text-[10px] font-inter-semibold"
+              style={{ color: isFocused ? colors.primary : colors.mutedForeground }}
             >
               {cfg?.label}
             </Text>
             {isFocused && (
-              <View
-                style={[styles.activeDot, { backgroundColor: colors.primary }]}
-              />
+              <View className="w-1 h-1 rounded-full mt-px" style={{ backgroundColor: colors.primary }} />
             )}
           </TouchableOpacity>
         );
@@ -152,48 +144,3 @@ export function CustomTabBar({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  bar: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderTopWidth: 1,
-    paddingTop: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 10,
-  },
-  tab: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 4,
-    gap: 3,
-    minHeight: 50,
-  },
-  label: {
-    fontSize: 10,
-    fontWeight: "600",
-    fontFamily: "Inter_600SemiBold",
-  },
-  activeDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    marginTop: 1,
-  },
-  fab: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#6D9E51",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-});

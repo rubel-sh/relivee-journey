@@ -4,7 +4,6 @@ import {
   Dimensions,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -45,6 +44,12 @@ function getTimeOfDay(ts: number) {
   return h < 12 ? "Morning" : h < 17 ? "Afternoon" : "Evening";
 }
 
+const SCREEN_WIDTH = Dimensions.get("window").width;
+const GAP = 12;
+const H_PAD = 16;
+const CARD_WIDTH = (SCREEN_WIDTH - H_PAD * 2 - GAP) / 2;
+const THUMB_HEIGHT = CARD_WIDTH * 0.62;
+
 function VideoCard({ activity }: { activity: Activity }) {
   const colors = useColors();
   const gradient = (TYPE_GRADIENT[activity.type] ?? ["#6D9E51", "#088395"]) as [string, string];
@@ -52,62 +57,69 @@ function VideoCard({ activity }: { activity: Activity }) {
   const tod = getTimeOfDay(activity.startTime);
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <LinearGradient colors={gradient} style={styles.thumbnail}>
-        <View style={styles.activityIconBadge}>
+    <View
+      className="flex-1 rounded-2xl border overflow-hidden"
+      style={{ backgroundColor: colors.card, borderColor: colors.border, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 3 }}
+    >
+      <LinearGradient colors={gradient} style={{ width: "100%", height: THUMB_HEIGHT }}>
+        <View className="absolute top-2 left-2 w-[26px] h-[26px] rounded-lg bg-black/[0.28] items-center justify-center">
           <Icon name={TYPE_ICON[activity.type]} size={14} color="rgba(255,255,255,0.9)" />
         </View>
 
-        <View style={styles.playOverlay}>
-          <View style={styles.playCircle}>
+        <View className="absolute inset-0 items-center justify-center">
+          <View className="w-10 h-10 rounded-full bg-black/[0.38] items-center justify-center border-[1.5px] border-white/40">
             <Icon name="play" size={18} color="white" />
           </View>
         </View>
 
-        <View style={styles.bottomBadges}>
-          <View style={styles.qualityBadge}>
+        <View className="absolute bottom-1.5 left-1.5 right-1.5 flex-row justify-between items-center">
+          <View className="flex-row items-center gap-[3px] bg-black/[0.45] px-1.5 py-[3px] rounded-md">
             <Icon name="videocam" size={9} color="white" />
-            <Text style={styles.qualityText}>4K</Text>
+            <Text className="text-white text-[9px] font-inter-bold">4K</Text>
           </View>
-          <Text style={styles.durationBadge}>{formatDuration(activity.duration)}</Text>
+          <Text className="text-white text-[10px] font-inter-semibold bg-black/[0.45] px-1.5 py-[3px] rounded-md">
+            {formatDuration(activity.duration)}
+          </Text>
         </View>
       </LinearGradient>
 
-      <View style={styles.cardBody}>
-        <Text style={[styles.cardTitle, { color: colors.foreground }]} numberOfLines={1}>
+      <View className="p-2.5 gap-1">
+        <Text className="text-[13px] font-inter-bold leading-[17px]" style={{ color: colors.foreground }} numberOfLines={1}>
           {tod} {label}
         </Text>
-        <Text style={[styles.cardDate, { color: colors.mutedForeground }]} numberOfLines={1}>
+        <Text className="text-[11px] font-inter-regular" style={{ color: colors.mutedForeground }} numberOfLines={1}>
           {new Date(activity.startTime).toLocaleDateString("en-US", {
             month: "short",
             day: "numeric",
           })}
         </Text>
 
-        <View style={styles.statsRow}>
-          <View style={styles.statChip}>
+        <View className="flex-row gap-2 mt-0.5">
+          <View className="flex-row items-center gap-[3px]">
             <Icon name="map-outline" size={10} color={colors.mutedForeground} />
-            <Text style={[styles.statText, { color: colors.mutedForeground }]}>
+            <Text className="text-[10px] font-inter-medium" style={{ color: colors.mutedForeground }}>
               {(activity.distance / 1000).toFixed(1)} km
             </Text>
           </View>
-          <View style={styles.statChip}>
+          <View className="flex-row items-center gap-[3px]">
             <Icon name="trending-up" size={10} color={colors.mutedForeground} />
-            <Text style={[styles.statText, { color: colors.mutedForeground }]}>
+            <Text className="text-[10px] font-inter-medium" style={{ color: colors.mutedForeground }}>
               +{activity.elevationGain}m
             </Text>
           </View>
         </View>
 
-        <View style={styles.cardFooter}>
+        <View className="flex-row items-center gap-1.5 mt-1.5">
           <TouchableOpacity
-            style={[styles.actionBtn, { backgroundColor: colors.primary }]}
+            className="flex-1 flex-row items-center justify-center gap-1 py-[7px] rounded-[10px]"
+            style={{ backgroundColor: colors.primary }}
           >
             <Icon name="play" size={11} color="white" />
-            <Text style={styles.actionBtnText}>Play</Text>
+            <Text className="text-white text-xs font-inter-semibold">Play</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.iconBtn, { backgroundColor: `${colors.primary}12`, borderColor: colors.border }]}
+            className="w-8 h-8 rounded-[10px] items-center justify-center border"
+            style={{ backgroundColor: `${colors.primary}12`, borderColor: colors.border }}
           >
             <Icon name="share-outline" size={14} color={colors.primary} />
           </TouchableOpacity>
@@ -133,35 +145,39 @@ export default function VideosScreen() {
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      className="flex-1"
+      style={{ backgroundColor: colors.background }}
       contentContainerStyle={{ paddingBottom: 100 }}
       showsVerticalScrollIndicator={false}
     >
       <View style={{ paddingTop: topPadding, paddingHorizontal: 20, paddingBottom: 16 }}>
-        <Text style={[styles.title, { color: colors.foreground }]}>Journey Videos</Text>
-        <Text style={[styles.sub, { color: colors.mutedForeground }]}>
+        <Text className="text-[28px] font-inter-bold" style={{ color: colors.foreground }}>Journey Videos</Text>
+        <Text className="text-[13px] font-inter-regular mt-0.5" style={{ color: colors.mutedForeground }}>
           {videoActivities.length} videos generated · 4K · 60fps
         </Text>
       </View>
 
       {videoActivities.length === 0 ? (
-        <View style={styles.empty}>
-          <View style={[styles.emptyIcon, { backgroundColor: `${colors.primary}12` }]}>
+        <View className="items-center px-10 py-[60px] gap-3">
+          <View
+            className="w-[72px] h-[72px] rounded-[20px] items-center justify-center mb-1"
+            style={{ backgroundColor: `${colors.primary}12` }}
+          >
             <Icon name="videocam-outline" size={36} color={colors.primary} />
           </View>
-          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No videos yet</Text>
-          <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+          <Text className="text-lg font-inter-bold" style={{ color: colors.foreground }}>No videos yet</Text>
+          <Text className="text-sm font-inter-regular text-center leading-5" style={{ color: colors.mutedForeground }}>
             Record an activity with elevation gain to generate a 3D video
           </Text>
         </View>
       ) : (
-        <View style={styles.grid}>
+        <View className="gap-3" style={{ paddingHorizontal: H_PAD }}>
           {pairs.map((pair, pi) => (
-            <View key={pi} style={styles.row}>
+            <View key={pi} className="flex-row gap-3">
               {pair.map((a) => (
                 <VideoCard key={a.id} activity={a} />
               ))}
-              {pair.length === 1 && <View style={styles.halfCell} />}
+              {pair.length === 1 && <View className="flex-1" />}
             </View>
           ))}
         </View>
@@ -169,148 +185,3 @@ export default function VideosScreen() {
     </ScrollView>
   );
 }
-
-const SCREEN_WIDTH = Dimensions.get("window").width;
-const GAP = 12;
-const H_PAD = 16;
-const CARD_WIDTH = (SCREEN_WIDTH - H_PAD * 2 - GAP) / 2;
-const THUMB_HEIGHT = CARD_WIDTH * 0.62;
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  title: { fontSize: 28, fontFamily: "Inter_700Bold" },
-  sub: { fontSize: 13, fontFamily: "Inter_400Regular", marginTop: 2 },
-
-  grid: { paddingHorizontal: H_PAD, gap: GAP },
-  row: { flexDirection: "row", gap: GAP },
-  halfCell: { flex: 1 },
-
-  card: {
-    flex: 1,
-    borderRadius: 16,
-    borderWidth: 1,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  thumbnail: {
-    width: "100%",
-    height: THUMB_HEIGHT,
-  },
-  activityIconBadge: {
-    position: "absolute",
-    top: 8,
-    left: 8,
-    width: 26,
-    height: 26,
-    borderRadius: 8,
-    backgroundColor: "rgba(0,0,0,0.28)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  playOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  playCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(0,0,0,0.38)",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.4)",
-  },
-  bottomBadges: {
-    position: "absolute",
-    bottom: 6,
-    left: 6,
-    right: 6,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  qualityBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  qualityText: { color: "white", fontSize: 9, fontFamily: "Inter_700Bold" },
-  durationBadge: {
-    color: "white",
-    fontSize: 10,
-    fontFamily: "Inter_600SemiBold",
-    backgroundColor: "rgba(0,0,0,0.45)",
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-
-  cardBody: { padding: 10, gap: 4 },
-  cardTitle: { fontSize: 13, fontFamily: "Inter_700Bold", lineHeight: 17 },
-  cardDate: { fontSize: 11, fontFamily: "Inter_400Regular" },
-
-  statsRow: { flexDirection: "row", gap: 8, marginTop: 2 },
-  statChip: { flexDirection: "row", alignItems: "center", gap: 3 },
-  statText: { fontSize: 10, fontFamily: "Inter_500Medium" },
-
-  cardFooter: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 6,
-  },
-  actionBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-    paddingVertical: 7,
-    borderRadius: 10,
-  },
-  actionBtnText: {
-    color: "white",
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-  },
-  iconBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-  },
-
-  empty: {
-    alignItems: "center",
-    paddingHorizontal: 40,
-    paddingVertical: 60,
-    gap: 12,
-  },
-  emptyIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 4,
-  },
-  emptyTitle: { fontSize: 18, fontFamily: "Inter_700Bold" },
-  emptyText: {
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    textAlign: "center",
-    lineHeight: 20,
-  },
-});

@@ -86,7 +86,7 @@ export default function RecordingScreen() {
   ).current;
 
   const animateMenu = (open: boolean) => {
-    const duration = open ? OPEN_DURATION : CLOSE_DURATION;
+    const dur = open ? OPEN_DURATION : CLOSE_DURATION;
     const easing = open ? Easing.out(Easing.back(1.4)) : Easing.in(Easing.quad);
 
     Animated.timing(triggerRotate, {
@@ -115,19 +115,19 @@ export default function RecordingScreen() {
           Animated.parallel([
             Animated.timing(anim.opacity, {
               toValue: 1,
-              duration,
+              duration: dur,
               easing: Easing.out(Easing.quad),
               useNativeDriver: true,
             }),
             Animated.timing(anim.translateX, {
               toValue: 0,
-              duration,
+              duration: dur,
               easing: Easing.out(Easing.back(1.3)),
               useNativeDriver: true,
             }),
             Animated.timing(anim.scale, {
               toValue: 1,
-              duration,
+              duration: dur,
               easing: Easing.out(Easing.back(1.3)),
               useNativeDriver: true,
             }),
@@ -141,19 +141,19 @@ export default function RecordingScreen() {
           Animated.parallel([
             Animated.timing(anim.opacity, {
               toValue: 0,
-              duration,
+              duration: dur,
               easing: Easing.in(Easing.quad),
               useNativeDriver: true,
             }),
             Animated.timing(anim.translateX, {
               toValue: 40,
-              duration,
+              duration: dur,
               easing: Easing.in(Easing.quad),
               useNativeDriver: true,
             }),
             Animated.timing(anim.scale, {
               toValue: 0.8,
-              duration,
+              duration: dur,
               easing: Easing.in(Easing.quad),
               useNativeDriver: true,
             }),
@@ -308,22 +308,23 @@ export default function RecordingScreen() {
 
   if (permGranted === false) {
     return (
-      <View style={[styles.permContainer, { backgroundColor: colors.background }]}>
+      <View className="flex-1 items-center justify-center p-10 gap-4" style={{ backgroundColor: colors.background }}>
         <Icon name="location-outline" size={56} color={colors.mutedForeground} />
-        <Text style={[styles.permTitle, { color: colors.foreground }]}>
+        <Text className="text-[22px] font-inter-bold" style={{ color: colors.foreground }}>
           Location Required
         </Text>
-        <Text style={[styles.permText, { color: colors.mutedForeground }]}>
+        <Text className="text-[15px] font-inter-regular text-center" style={{ color: colors.mutedForeground }}>
           Journey needs location access to track your GPS route.
         </Text>
         <TouchableOpacity
-          style={[styles.permBtn, { backgroundColor: colors.primary }]}
+          className="px-8 py-3.5 rounded-full"
+          style={{ backgroundColor: colors.primary }}
           onPress={requestPermission}
         >
-          <Text style={styles.permBtnText}>Grant Permission</Text>
+          <Text className="text-white text-base font-inter-semibold">Grant Permission</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={[styles.cancelText, { color: colors.mutedForeground }]}>Cancel</Text>
+          <Text className="text-[15px] font-inter-regular" style={{ color: colors.mutedForeground }}>Cancel</Text>
         </TouchableOpacity>
       </View>
     );
@@ -361,7 +362,7 @@ export default function RecordingScreen() {
   ];
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1">
       <MapView
         ref={mapRef}
         provider={PROVIDER_DEFAULT}
@@ -402,94 +403,126 @@ export default function RecordingScreen() {
       </MapView>
 
       {/* Top bar */}
-      <View style={[styles.topBar, { paddingTop: topPad, backgroundColor: "rgba(255,255,255,0.88)" }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+      <View
+        className="absolute top-0 left-0 right-0 flex-row items-center justify-between px-4 pb-2.5 z-10"
+        style={{ paddingTop: topPad, backgroundColor: "rgba(255,255,255,0.88)" }}
+      >
+        <TouchableOpacity onPress={() => router.back()} className="p-1">
           <Icon name="chevron-down" size={24} color="#262626" />
         </TouchableOpacity>
-        <View style={styles.recIndicator}>
-          <View style={[styles.recDot, { backgroundColor: paused ? "#FFB800" : "#FF4444" }]} />
-          <Text style={styles.recText}>{paused ? "PAUSED" : "RECORDING"}</Text>
+        <View className="flex-row items-center gap-1.5">
+          <View className="w-2 h-2 rounded-full" style={{ backgroundColor: paused ? "#FFB800" : "#FF4444" }} />
+          <Text className="text-[13px] font-inter-bold text-[#FF4444]">
+            {paused ? "PAUSED" : "RECORDING"}
+          </Text>
         </View>
-        <View style={styles.gpsBadge}>
+        <View className="flex-row items-center gap-1 bg-[rgba(8,131,149,0.12)] px-2 py-1 rounded-[10px]">
           <Icon name="navigate" size={11} color="#088395" />
-          <Text style={styles.gpsText}>GPS</Text>
+          <Text className="text-[11px] font-inter-semibold text-accent">GPS</Text>
         </View>
       </View>
 
       {/* Stats card */}
-      <View style={[styles.statsCard, { bottom: botPad + 80, backgroundColor: "rgba(255,255,255,0.93)" }]}>
-        <Text style={styles.timerText}>
+      <View
+        className="absolute left-3 rounded-[18px] p-3.5 min-w-[200px] z-10"
+        style={{
+          bottom: botPad + 80,
+          backgroundColor: "rgba(255,255,255,0.93)",
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.12,
+          shadowRadius: 12,
+          elevation: 8,
+        }}
+      >
+        <Text className="text-[32px] font-inter-bold text-foreground mb-2">
           {formatDuration(duration)}
-          <Text style={styles.timerLabel}> duration</Text>
+          <Text className="text-[13px] text-[#aaa] font-inter-regular"> duration</Text>
         </Text>
-        <View style={styles.statsRow}>
-          <View style={styles.statItem}>
+        <View className="flex-row gap-3 mb-2">
+          <View className="flex-row items-center gap-[3px]">
             <Icon name="map-outline" size={12} color={colors.primary} />
-            <Text style={styles.statVal}>{(distance / 1000).toFixed(2)}</Text>
-            <Text style={styles.statUnit}>km</Text>
+            <Text className="text-sm font-inter-bold text-foreground">{(distance / 1000).toFixed(2)}</Text>
+            <Text className="text-[11px] text-[#999] font-inter-regular">km</Text>
           </View>
-          <View style={styles.statItem}>
+          <View className="flex-row items-center gap-[3px]">
             <Icon name="flash-outline" size={12} color={colors.accent} />
-            <Text style={styles.statVal}>{currentSpeed.toFixed(1)}</Text>
-            <Text style={styles.statUnit}>km/h</Text>
+            <Text className="text-sm font-inter-bold text-foreground">{currentSpeed.toFixed(1)}</Text>
+            <Text className="text-[11px] text-[#999] font-inter-regular">km/h</Text>
           </View>
-          <View style={styles.statItem}>
+          <View className="flex-row items-center gap-[3px]">
             <Icon name="trending-up-outline" size={12} color={colors.trace} />
-            <Text style={styles.statVal}>+{Math.round(elevGain)}</Text>
-            <Text style={styles.statUnit}>m</Text>
+            <Text className="text-sm font-inter-bold text-foreground">+{Math.round(elevGain)}</Text>
+            <Text className="text-[11px] text-[#999] font-inter-regular">m</Text>
           </View>
         </View>
-        <View style={[styles.statsDivider, { borderTopColor: "#F0F0F0" }]}>
-          <View style={styles.statItem}>
+        <View className="flex-row gap-3 border-t pt-2" style={{ borderTopColor: "#F0F0F0" }}>
+          <View className="flex-row items-center gap-[3px]">
             <Icon name="flash" size={11} color={colors.primary} />
-            <Text style={styles.subStatText}>{maxSpeed.toFixed(1)} km/h max</Text>
+            <Text className="text-[11px] font-inter-medium text-[#666]">{maxSpeed.toFixed(1)} km/h max</Text>
           </View>
-          <View style={styles.statItem}>
+          <View className="flex-row items-center gap-[3px]">
             <Icon name="videocam-outline" size={11} color={colors.trace} />
-            <Text style={styles.subStatText}>4K · 60fps</Text>
+            <Text className="text-[11px] font-inter-medium text-[#666]">4K · 60fps</Text>
           </View>
         </View>
       </View>
 
-      {/* Radial action menu */}
+      {/* Backdrop to close menu */}
       {menuOpen && (
         <TouchableWithoutFeedback onPress={handleMenuToggle}>
-          <View style={StyleSheet.absoluteFill} />
+          <View className="absolute inset-0" />
         </TouchableWithoutFeedback>
       )}
 
-      <View style={[styles.menuContainer, { bottom: botPad + 80 }]}>
+      {/* Radial action menu */}
+      <View
+        className="absolute right-3 items-end gap-2.5 z-20"
+        style={{ bottom: botPad + 80, elevation: 20 }}
+      >
         {menuOpen && (
-          <View style={styles.menuItems}>
+          <View className="gap-2 items-end">
             {menuItems.map((item, i) => (
               <Animated.View
                 key={item.label}
-                style={[
-                  styles.menuRow,
-                  {
-                    opacity: itemAnims[i].opacity,
-                    transform: [
-                      { translateX: itemAnims[i].translateX },
-                      { scale: itemAnims[i].scale },
-                    ],
-                  },
-                ]}
+                className="items-end"
+                style={{
+                  opacity: itemAnims[i].opacity,
+                  transform: [
+                    { translateX: itemAnims[i].translateX },
+                    { scale: itemAnims[i].scale },
+                  ],
+                }}
               >
                 <TouchableOpacity
-                  style={[styles.menuPill, { backgroundColor: "rgba(255,255,255,0.96)" }]}
+                  className="flex-row items-center gap-2.5 py-2.5 pl-2.5 pr-3.5 rounded-3xl w-[152px]"
+                  style={{
+                    backgroundColor: "rgba(255,255,255,0.96)",
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.13,
+                    shadowRadius: 12,
+                    elevation: 6,
+                  }}
                   onPress={() => {
                     animateMenu(false);
                     setTimeout(item.onPress, 80);
                   }}
                   activeOpacity={0.8}
                 >
-                  <View style={[styles.menuIconWrap, { backgroundColor: `${item.accent}18` }]}>
+                  <View
+                    className="w-8 h-8 rounded-full items-center justify-center shrink-0"
+                    style={{ backgroundColor: `${item.accent}18` }}
+                  >
                     <Icon name={item.icon} size={16} color={item.accent} />
                   </View>
-                  <Text style={[styles.menuPillText, { color: colors.foreground }]}>
+                  <Text className="text-[13px] font-inter-semibold shrink grow" style={{ color: colors.foreground }}>
                     {item.label}
                   </Text>
-                  <View style={[styles.menuAccentBar, { backgroundColor: item.accent }]} />
+                  <View
+                    className="w-[3px] h-5 rounded-sm shrink-0"
+                    style={{ backgroundColor: item.accent }}
+                  />
                 </TouchableOpacity>
               </Animated.View>
             ))}
@@ -499,7 +532,15 @@ export default function RecordingScreen() {
         {/* Trigger button */}
         <Animated.View style={{ transform: [{ scale: triggerScale }] }}>
           <TouchableOpacity
-            style={[styles.menuTrigger, { backgroundColor: menuOpen ? colors.foreground : "rgba(255,255,255,0.95)" }]}
+            className="w-[46px] h-[46px] rounded-[23px] items-center justify-center"
+            style={{
+              backgroundColor: menuOpen ? colors.foreground : "rgba(255,255,255,0.95)",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 3 },
+              shadowOpacity: 0.18,
+              shadowRadius: 10,
+              elevation: 6,
+            }}
             onPress={handleMenuToggle}
             activeOpacity={0.85}
           >
@@ -516,227 +557,51 @@ export default function RecordingScreen() {
 
       {/* Bottom nav */}
       <View
-        style={[
-          styles.bottomNav,
-          {
-            paddingBottom: botPad,
-            backgroundColor: colors.card,
-            borderTopColor: colors.border,
-          },
-        ]}
+        className="absolute bottom-0 left-0 right-0 flex-row items-center border-t pt-2 z-10"
+        style={{
+          paddingBottom: botPad,
+          backgroundColor: colors.card,
+          borderTopColor: colors.border,
+        }}
       >
-        <TouchableOpacity style={styles.navTab} onPress={handleStop}>
-          <View style={styles.stopIcon}>
+        <TouchableOpacity className="flex-1 items-center justify-center pt-1 gap-[3px] min-h-[50px]" onPress={handleStop}>
+          <View className="w-8 h-8 rounded-2xl bg-[#FFF0F0] items-center justify-center">
             <Icon name="square" size={16} color={colors.destructive} />
           </View>
-          <Text style={[styles.navLabel, { color: colors.destructive }]}>Stop</Text>
+          <Text className="text-[10px] font-inter-semibold" style={{ color: colors.destructive }}>Stop</Text>
         </TouchableOpacity>
 
-        <View style={styles.navTab}>
+        <View className="flex-1 items-center justify-center pt-1 gap-[3px] min-h-[50px]">
           <Icon name="time-outline" size={22} color={colors.mutedForeground} />
-          <Text style={[styles.navLabel, { color: colors.mutedForeground }]}>History</Text>
+          <Text className="text-[10px] font-inter-semibold" style={{ color: colors.mutedForeground }}>History</Text>
         </View>
 
-        <TouchableOpacity style={styles.navTab} onPress={handlePause}>
+        <TouchableOpacity className="flex-1 items-center justify-center pt-1 gap-[3px] min-h-[50px]" onPress={handlePause}>
           <View
-            style={[
-              styles.fab,
-              {
-                backgroundColor: paused ? colors.accent : colors.primary,
-                shadowColor: colors.primary,
-              },
-            ]}
+            className="w-[52px] h-[52px] rounded-[26px] items-center justify-center"
+            style={{
+              backgroundColor: paused ? colors.accent : colors.primary,
+              shadowColor: colors.primary,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.4,
+              shadowRadius: 8,
+              elevation: 6,
+            }}
           >
             <Icon name={paused ? "play" : "pause"} size={22} color="white" />
           </View>
         </TouchableOpacity>
 
-        <View style={styles.navTab}>
+        <View className="flex-1 items-center justify-center pt-1 gap-[3px] min-h-[50px]">
           <Icon name="videocam-outline" size={22} color={colors.mutedForeground} />
-          <Text style={[styles.navLabel, { color: colors.mutedForeground }]}>Videos</Text>
+          <Text className="text-[10px] font-inter-semibold" style={{ color: colors.mutedForeground }}>Videos</Text>
         </View>
 
-        <View style={styles.navTab}>
+        <View className="flex-1 items-center justify-center pt-1 gap-[3px] min-h-[50px]">
           <Icon name="person-outline" size={22} color={colors.mutedForeground} />
-          <Text style={[styles.navLabel, { color: colors.mutedForeground }]}>Profile</Text>
+          <Text className="text-[10px] font-inter-semibold" style={{ color: colors.mutedForeground }}>Profile</Text>
         </View>
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  topBar: {
-    position: "absolute",
-    top: 0, left: 0, right: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-    zIndex: 10,
-  },
-  backBtn: { padding: 4 },
-  recIndicator: { flexDirection: "row", alignItems: "center", gap: 6 },
-  recDot: { width: 8, height: 8, borderRadius: 4 },
-  recText: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#FF4444" },
-  gpsBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: "rgba(8,131,149,0.12)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  gpsText: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#088395" },
-  statsCard: {
-    position: "absolute",
-    left: 12,
-    borderRadius: 18,
-    padding: 14,
-    minWidth: 200,
-    zIndex: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  timerText: {
-    fontSize: 32,
-    fontFamily: "Inter_700Bold",
-    color: "#262626",
-    marginBottom: 8,
-  },
-  timerLabel: { fontSize: 13, color: "#aaa", fontFamily: "Inter_400Regular" },
-  statsRow: { flexDirection: "row", gap: 12, marginBottom: 8 },
-  statItem: { flexDirection: "row", alignItems: "center", gap: 3 },
-  statVal: { fontSize: 14, fontFamily: "Inter_700Bold", color: "#262626" },
-  statUnit: { fontSize: 11, color: "#999", fontFamily: "Inter_400Regular" },
-  statsDivider: { flexDirection: "row", gap: 12, borderTopWidth: 1, paddingTop: 8 },
-  subStatText: { fontSize: 11, fontFamily: "Inter_500Medium", color: "#666" },
-
-  menuContainer: {
-    position: "absolute",
-    right: 12,
-    alignItems: "flex-end",
-    gap: 10,
-    zIndex: 20,
-    elevation: 20,
-  },
-  menuItems: {
-    gap: 8,
-    alignItems: "flex-end",
-  },
-  menuRow: {
-    alignItems: "flex-end",
-  },
-  menuPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingVertical: 10,
-    paddingLeft: 10,
-    paddingRight: 14,
-    borderRadius: 24,
-    width: 152,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.13,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  menuIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  menuPillText: {
-    fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
-    flexShrink: 1,
-    flexGrow: 1,
-  },
-  menuAccentBar: {
-    width: 3,
-    height: 20,
-    borderRadius: 2,
-    flexShrink: 0,
-  },
-  menuTrigger: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-  bottomNav: {
-    position: "absolute",
-    bottom: 0, left: 0, right: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    borderTopWidth: 1,
-    paddingTop: 8,
-    zIndex: 10,
-  },
-  navTab: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 4,
-    gap: 3,
-    minHeight: 50,
-  },
-  navLabel: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
-  stopIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#FFF0F0",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  fab: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  permContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 40,
-    gap: 16,
-  },
-  permTitle: { fontSize: 22, fontFamily: "Inter_700Bold" },
-  permText: {
-    fontSize: 15,
-    fontFamily: "Inter_400Regular",
-    textAlign: "center",
-    lineHeight: 22,
-  },
-  permBtn: {
-    paddingHorizontal: 32,
-    paddingVertical: 14,
-    borderRadius: 30,
-    marginTop: 8,
-  },
-  permBtnText: { color: "white", fontSize: 16, fontFamily: "Inter_600SemiBold" },
-  cancelText: { fontSize: 15, fontFamily: "Inter_500Medium", marginTop: 4 },
-});

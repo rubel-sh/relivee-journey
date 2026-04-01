@@ -3,7 +3,6 @@ import React from "react";
 import {
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -35,24 +34,25 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      className="flex-1"
+      style={{ backgroundColor: colors.background }}
       contentContainerStyle={{ paddingBottom: 100 }}
     >
       <View style={{ paddingTop: topPadding }}>
-        <View style={styles.profileHeader}>
+        <View className="items-center py-6">
           <LinearGradient
             colors={[colors.primary, colors.accent]}
-            style={styles.avatar}
+            className="w-20 h-20 rounded-full items-center justify-center mb-3"
           >
-            <Text style={styles.avatarText}>A</Text>
+            <Text className="text-white text-[32px] font-inter-bold">A</Text>
           </LinearGradient>
-          <Text style={[styles.name, { color: colors.foreground }]}>Alex</Text>
-          <Text style={[styles.since, { color: colors.mutedForeground }]}>
+          <Text className="text-2xl font-inter-bold" style={{ color: colors.foreground }}>Alex</Text>
+          <Text className="text-[13px] font-inter-regular mt-1" style={{ color: colors.mutedForeground }}>
             Journey member since 2024
           </Text>
         </View>
 
-        <View style={[styles.statsCard, { backgroundColor: "#1A2A1A" }]}>
+        <View className="flex-row mx-4 rounded-2xl mb-6 overflow-hidden bg-[#1A2A1A]">
           {[
             { label: "Total Distance", value: `${totalKm.toFixed(1)} km` },
             { label: "Total Time", value: `${Math.floor(totalTime / 3600)}h ${Math.floor((totalTime % 3600) / 60)}m` },
@@ -60,35 +60,39 @@ export default function ProfileScreen() {
           ].map((s, i) => (
             <View
               key={s.label}
-              style={[
-                styles.statBlock,
-                i < 2 && { borderRightWidth: 1, borderRightColor: "rgba(255,255,255,0.12)" },
-              ]}
+              className="flex-1 items-center py-4"
+              style={i < 2 ? { borderRightWidth: 1, borderRightColor: "rgba(255,255,255,0.12)" } : undefined}
             >
-              <Text style={styles.statVal}>{s.value}</Text>
-              <Text style={styles.statLabel}>{s.label}</Text>
+              <Text className="text-white text-lg font-inter-bold">{s.value}</Text>
+              <Text className="text-white/50 text-[11px] font-inter-regular mt-[3px]">{s.label}</Text>
             </View>
           ))}
         </View>
 
-        <Text style={[styles.section, { color: colors.mutedForeground }]}>SETTINGS</Text>
-        <View style={[styles.settingsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Text className="text-[11px] font-inter-semibold tracking-[0.8px] px-5 mb-2" style={{ color: colors.mutedForeground }}>
+          SETTINGS
+        </Text>
+        <View
+          className="mx-4 rounded-2xl border overflow-hidden mb-6"
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        >
           {settings.map((s, i) => (
             <TouchableOpacity
               key={s.label}
-              style={[
-                styles.settingsRow,
-                i < settings.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border },
-              ]}
+              className="flex-row items-center px-4 py-3.5 gap-3"
+              style={i < settings.length - 1 ? { borderBottomWidth: 1, borderBottomColor: colors.border } : undefined}
             >
-              <View style={[styles.settingsIcon, { backgroundColor: `${colors.primary}15` }]}>
+              <View
+                className="w-[34px] h-[34px] rounded-[10px] items-center justify-center"
+                style={{ backgroundColor: `${colors.primary}15` }}
+              >
                 <Icon name={s.icon} size={18} color={colors.primary} />
               </View>
-              <Text style={[styles.settingsLabel, { color: colors.foreground }]}>
+              <Text className="flex-1 text-[15px] font-inter-medium" style={{ color: colors.foreground }}>
                 {s.label}
               </Text>
-              <View style={styles.settingsRight}>
-                <Text style={[styles.settingsValue, { color: colors.mutedForeground }]}>
+              <View className="flex-row items-center gap-1">
+                <Text className="text-[13px] font-inter-regular" style={{ color: colors.mutedForeground }}>
                   {s.value}
                 </Text>
                 <Icon name="chevron-forward" size={16} color={colors.mutedForeground} />
@@ -97,13 +101,18 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        <Text style={[styles.section, { color: colors.mutedForeground }]}>DATA</Text>
-        <View style={[styles.settingsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <TouchableOpacity style={styles.settingsRow} onPress={clearActivities}>
-            <View style={[styles.settingsIcon, { backgroundColor: "#FF444415" }]}>
+        <Text className="text-[11px] font-inter-semibold tracking-[0.8px] px-5 mb-2" style={{ color: colors.mutedForeground }}>
+          DATA
+        </Text>
+        <View
+          className="mx-4 rounded-2xl border overflow-hidden mb-6"
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        >
+          <TouchableOpacity className="flex-row items-center px-4 py-3.5 gap-3" onPress={clearActivities}>
+            <View className="w-[34px] h-[34px] rounded-[10px] items-center justify-center bg-[#FF444415]">
               <Icon name="trash-outline" size={18} color={colors.destructive} />
             </View>
-            <Text style={[styles.settingsLabel, { color: colors.destructive }]}>
+            <Text className="flex-1 text-[15px] font-inter-medium" style={{ color: colors.destructive }}>
               Clear All Activities
             </Text>
             <Icon name="chevron-forward" size={16} color={colors.mutedForeground} />
@@ -113,65 +122,3 @@ export default function ProfileScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  profileHeader: { alignItems: "center", paddingVertical: 24 },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 12,
-  },
-  avatarText: { color: "white", fontSize: 32, fontFamily: "Inter_700Bold" },
-  name: { fontSize: 24, fontFamily: "Inter_700Bold" },
-  since: { fontSize: 13, fontFamily: "Inter_400Regular", marginTop: 4 },
-  statsCard: {
-    flexDirection: "row",
-    marginHorizontal: 16,
-    borderRadius: 16,
-    marginBottom: 24,
-    overflow: "hidden",
-  },
-  statBlock: { flex: 1, alignItems: "center", paddingVertical: 16 },
-  statVal: { color: "white", fontSize: 18, fontFamily: "Inter_700Bold" },
-  statLabel: {
-    color: "rgba(255,255,255,0.5)",
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    marginTop: 3,
-  },
-  section: {
-    fontSize: 11,
-    fontFamily: "Inter_600SemiBold",
-    letterSpacing: 0.8,
-    paddingHorizontal: 20,
-    marginBottom: 8,
-  },
-  settingsCard: {
-    marginHorizontal: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    overflow: "hidden",
-    marginBottom: 24,
-  },
-  settingsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    gap: 12,
-  },
-  settingsIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  settingsLabel: { flex: 1, fontSize: 15, fontFamily: "Inter_500Medium" },
-  settingsRight: { flexDirection: "row", alignItems: "center", gap: 4 },
-  settingsValue: { fontSize: 13, fontFamily: "Inter_400Regular" },
-});

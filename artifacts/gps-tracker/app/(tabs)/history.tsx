@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import {
   FlatList,
   Platform,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -68,46 +67,50 @@ function HistoryCard({ activity }: { activity: Activity }) {
 
   return (
     <TouchableOpacity
-      style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+      className="rounded-2xl border overflow-hidden"
+      style={{ backgroundColor: colors.card, borderColor: colors.border }}
       onPress={() => setExpanded(!expanded)}
       activeOpacity={0.9}
     >
-      <View style={styles.cardRow}>
-        <LinearGradient colors={gradient} style={styles.miniMap}>
+      <View className="flex-row items-center p-3 gap-3">
+        <LinearGradient colors={gradient} className="w-[52px] h-[52px] rounded-xl items-center justify-center shrink-0">
           <Icon name={TYPE_ICON[activity.type]} size={20} color="white" />
         </LinearGradient>
 
-        <View style={styles.cardInfo}>
-          <View style={styles.cardTopRow}>
-            <Text style={[styles.cardTitle, { color: colors.foreground }]}>
+        <View className="flex-1">
+          <View className="flex-row items-center gap-1.5 mb-0.5">
+            <Text className="text-[15px] font-inter-bold flex-1" style={{ color: colors.foreground }}>
               {getActivityName(activity)}
             </Text>
             {activity.elevationGain > 100 && (
-              <View style={[styles.videoBadge, { backgroundColor: `${colors.trace}18` }]}>
+              <View
+                className="flex-row items-center gap-[3px] px-[7px] py-[3px] rounded-[10px]"
+                style={{ backgroundColor: `${colors.trace}18` }}
+              >
                 <Icon name="videocam" size={11} color={colors.trace} />
-                <Text style={[styles.videoBadgeText, { color: colors.trace }]}>Video</Text>
+                <Text className="text-[10px] font-inter-semibold" style={{ color: colors.trace }}>Video</Text>
               </View>
             )}
           </View>
-          <Text style={[styles.cardDate, { color: colors.mutedForeground }]}>
+          <Text className="text-xs font-inter-regular mb-1.5" style={{ color: colors.mutedForeground }}>
             {formatDate(activity.startTime)}
           </Text>
-          <View style={styles.statsRow}>
-            <View style={styles.stat}>
+          <View className="flex-row gap-2 flex-wrap">
+            <View className="flex-row items-center gap-[3px]">
               <Icon name="map-outline" size={12} color={colors.mutedForeground} />
-              <Text style={[styles.statVal, { color: colors.foreground }]}>
+              <Text className="text-[11px] font-inter-medium" style={{ color: colors.foreground }}>
                 {(activity.distance / 1000).toFixed(1)} km
               </Text>
             </View>
-            <View style={styles.stat}>
+            <View className="flex-row items-center gap-[3px]">
               <Icon name="timer-outline" size={12} color={colors.mutedForeground} />
-              <Text style={[styles.statVal, { color: colors.foreground }]}>
+              <Text className="text-[11px] font-inter-medium" style={{ color: colors.foreground }}>
                 {formatDuration(activity.duration)}
               </Text>
             </View>
-            <View style={styles.stat}>
+            <View className="flex-row items-center gap-[3px]">
               <Icon name="flash-outline" size={12} color={colors.mutedForeground} />
-              <Text style={[styles.statVal, { color: colors.foreground }]}>
+              <Text className="text-[11px] font-inter-medium" style={{ color: colors.foreground }}>
                 {activity.avgSpeed.toFixed(1)} km/h
               </Text>
             </View>
@@ -122,40 +125,50 @@ function HistoryCard({ activity }: { activity: Activity }) {
       </View>
 
       {expanded && (
-        <View style={[styles.expandedRow, { borderTopColor: colors.border }]}>
-          <View style={styles.expandedStats}>
-            <View style={styles.expandedStat}>
-              <View style={[styles.expandedStatIcon, { backgroundColor: `${colors.primary}15` }]}>
+        <View
+          className="flex-row items-center justify-between px-3 py-2.5 border-t flex-wrap gap-2"
+          style={{ borderTopColor: colors.border }}
+        >
+          <View className="flex-row gap-4 shrink">
+            <View className="flex-row items-center gap-1.5">
+              <View
+                className="w-7 h-7 rounded-lg items-center justify-center"
+                style={{ backgroundColor: `${colors.primary}15` }}
+              >
                 <Icon name="flash" size={14} color={colors.primary} />
               </View>
               <View>
-                <Text style={[styles.expandedVal, { color: colors.foreground }]}>
+                <Text className="text-[13px] font-inter-bold" style={{ color: colors.foreground }}>
                   {activity.maxSpeed.toFixed(1)} km/h
                 </Text>
-                <Text style={[styles.expandedLabel, { color: colors.mutedForeground }]}>
+                <Text className="text-[10px] font-inter-regular" style={{ color: colors.mutedForeground }}>
                   max speed
                 </Text>
               </View>
             </View>
-            <View style={styles.expandedStat}>
-              <View style={[styles.expandedStatIcon, { backgroundColor: `${colors.accent}15` }]}>
+            <View className="flex-row items-center gap-1.5">
+              <View
+                className="w-7 h-7 rounded-lg items-center justify-center"
+                style={{ backgroundColor: `${colors.accent}15` }}
+              >
                 <Icon name="trending-up" size={14} color={colors.accent} />
               </View>
               <View>
-                <Text style={[styles.expandedVal, { color: colors.foreground }]}>
+                <Text className="text-[13px] font-inter-bold" style={{ color: colors.foreground }}>
                   +{activity.elevationGain}m
                 </Text>
-                <Text style={[styles.expandedLabel, { color: colors.mutedForeground }]}>
+                <Text className="text-[10px] font-inter-regular" style={{ color: colors.mutedForeground }}>
                   elevation
                 </Text>
               </View>
             </View>
           </View>
           <TouchableOpacity
-            style={[styles.playBtn, { backgroundColor: colors.primary }]}
+            className="flex-row items-center gap-[5px] px-3.5 py-2 rounded-full"
+            style={{ backgroundColor: colors.primary }}
           >
             <Icon name="play" size={14} color="white" />
-            <Text style={styles.playBtnText}>Video</Text>
+            <Text className="text-white text-xs font-inter-semibold">Video</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -180,17 +193,17 @@ export default function HistoryScreen() {
   const topPadding = isWeb ? 67 : insets.top;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <View style={{ paddingTop: topPadding, paddingHorizontal: 20, paddingBottom: 8 }}>
-        <Text style={[styles.pageTitle, { color: colors.foreground }]}>
+        <Text className="text-[28px] font-inter-bold" style={{ color: colors.foreground }}>
           Activity History
         </Text>
-        <Text style={[styles.pageSubtitle, { color: colors.mutedForeground }]}>
+        <Text className="text-[13px] font-inter-regular mt-0.5" style={{ color: colors.mutedForeground }}>
           {activities.length} activities recorded
         </Text>
       </View>
 
-      <View style={[styles.summaryStrip, { backgroundColor: "#1A2A1A" }]}>
+      <View className="flex-row mx-4 rounded-2xl mb-4 overflow-hidden bg-[#1A2A1A]">
         {[
           { label: "Distance", value: `${totalDist.toFixed(1)} km` },
           { label: "Top Speed", value: `${topSpeed.toFixed(1)} km/h` },
@@ -199,18 +212,16 @@ export default function HistoryScreen() {
         ].map((s, i) => (
           <View
             key={s.label}
-            style={[
-              styles.summaryItem,
-              i < 3 && { borderRightWidth: 1, borderRightColor: "rgba(255,255,255,0.12)" },
-            ]}
+            className="flex-1 items-center py-3.5"
+            style={i < 3 ? { borderRightWidth: 1, borderRightColor: "rgba(255,255,255,0.12)" } : undefined}
           >
-            <Text style={styles.summaryValue}>{s.value}</Text>
-            <Text style={styles.summaryLabel}>{s.label}</Text>
+            <Text className="text-white text-[15px] font-inter-bold">{s.value}</Text>
+            <Text className="text-white/50 text-[10px] font-inter-regular mt-0.5">{s.label}</Text>
           </View>
         ))}
       </View>
 
-      <View style={styles.filterRow}>
+      <View className="mb-2">
         <FlatList
           horizontal
           data={FILTERS}
@@ -222,19 +233,15 @@ export default function HistoryScreen() {
             return (
               <TouchableOpacity
                 onPress={() => setFilter(item.key)}
-                style={[
-                  styles.filterPill,
-                  {
-                    backgroundColor: active ? colors.primary : colors.card,
-                    borderColor: active ? colors.primary : colors.border,
-                  },
-                ]}
+                className="px-3.5 py-[7px] rounded-full border"
+                style={{
+                  backgroundColor: active ? colors.primary : colors.card,
+                  borderColor: active ? colors.primary : colors.border,
+                }}
               >
                 <Text
-                  style={[
-                    styles.filterText,
-                    { color: active ? "white" : colors.foreground },
-                  ]}
+                  className="text-[13px] font-inter-semibold"
+                  style={{ color: active ? "white" : colors.foreground }}
                 >
                   {item.label}
                 </Text>
@@ -251,9 +258,9 @@ export default function HistoryScreen() {
         showsVerticalScrollIndicator={false}
         scrollEnabled={filtered.length > 0}
         ListEmptyComponent={
-          <View style={styles.empty}>
+          <View className="items-center py-10 gap-2.5">
             <Icon name="map-outline" size={40} color={colors.mutedForeground} />
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+            <Text className="text-[15px] font-inter-regular text-center" style={{ color: colors.mutedForeground }}>
               No activities match this filter
             </Text>
           </View>
@@ -263,112 +270,3 @@ export default function HistoryScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  pageTitle: { fontSize: 28, fontFamily: "Inter_700Bold" },
-  pageSubtitle: { fontSize: 13, fontFamily: "Inter_400Regular", marginTop: 2 },
-  summaryStrip: {
-    flexDirection: "row",
-    marginHorizontal: 16,
-    borderRadius: 16,
-    marginBottom: 16,
-    overflow: "hidden",
-  },
-  summaryItem: { flex: 1, alignItems: "center", paddingVertical: 14 },
-  summaryValue: {
-    color: "white",
-    fontSize: 15,
-    fontFamily: "Inter_700Bold",
-  },
-  summaryLabel: {
-    color: "rgba(255,255,255,0.5)",
-    fontSize: 10,
-    fontFamily: "Inter_400Regular",
-    marginTop: 2,
-  },
-  filterRow: { marginBottom: 8 },
-  filterPill: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  filterText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
-  card: {
-    borderRadius: 16,
-    borderWidth: 1,
-    overflow: "hidden",
-  },
-  cardRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    gap: 12,
-  },
-  miniMap: {
-    width: 52,
-    height: 52,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  cardInfo: { flex: 1 },
-  cardTopRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginBottom: 2,
-  },
-  cardTitle: { fontSize: 15, fontFamily: "Inter_700Bold", flex: 1 },
-  videoBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 10,
-  },
-  videoBadgeText: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
-  cardDate: { fontSize: 12, fontFamily: "Inter_400Regular", marginBottom: 6 },
-  statsRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
-  stat: { flexDirection: "row", alignItems: "center", gap: 3 },
-  statVal: { fontSize: 11, fontFamily: "Inter_500Medium" },
-  expandedRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  expandedStats: { flexDirection: "row", gap: 16, flexShrink: 1 },
-  expandedStat: { flexDirection: "row", alignItems: "center", gap: 6 },
-  expandedStatIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    alignItems: "center" as const,
-    justifyContent: "center" as const,
-  },
-  expandedVal: { fontSize: 13, fontFamily: "Inter_700Bold" },
-  expandedLabel: { fontSize: 10, fontFamily: "Inter_400Regular" },
-  playBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  playBtnText: {
-    color: "white",
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-  },
-  empty: { alignItems: "center", paddingVertical: 40, gap: 10 },
-  emptyText: { fontSize: 15, fontFamily: "Inter_400Regular", textAlign: "center" },
-});

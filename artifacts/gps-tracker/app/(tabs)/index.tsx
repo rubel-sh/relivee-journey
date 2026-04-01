@@ -125,12 +125,12 @@ function ActivityCard({ activity, featured }: { activity: Activity; featured?: b
   });
 
   return (
-    <View style={[
-      styles.card,
-      { backgroundColor: colors.card, shadowColor: gradient[2], width: cardW },
-    ]}>
+    <View
+      className="rounded-2xl overflow-hidden"
+      style={{ backgroundColor: colors.card, shadowColor: gradient[2], width: cardW, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.14, shadowRadius: 12, elevation: 5 }}
+    >
       {/* Thumbnail */}
-      <View style={[styles.thumb, { height: thumbH }]}>
+      <View className="w-full overflow-hidden justify-between" style={{ height: thumbH }}>
         <LinearGradient
           colors={gradient}
           start={{ x: 0, y: 0 }}
@@ -162,88 +162,68 @@ function ActivityCard({ activity, featured }: { activity: Activity; featured?: b
             strokeLinejoin="round"
             strokeDasharray="5 4"
           />
-          <SvgCircle
-            cx={route.startX}
-            cy={route.startY}
-            r={featured ? 5 : 4}
-            fill="rgba(255,255,255,0.9)"
-          />
-          <SvgCircle
-            cx={route.endX}
-            cy={route.endY}
-            r={featured ? 8 : 6}
-            fill="rgba(255,255,255,0.25)"
-          />
-          <SvgCircle
-            cx={route.endX}
-            cy={route.endY}
-            r={featured ? 4.5 : 3.5}
-            fill="white"
-          />
-          {/* Bottom scrim for text legibility */}
-          <Rect
-            x={0}
-            y={thumbH * 0.58}
-            width={cardW}
-            height={thumbH * 0.42}
-            fill="rgba(0,0,0,0.38)"
-          />
+          <SvgCircle cx={route.startX} cy={route.startY} r={featured ? 5 : 4} fill="rgba(255,255,255,0.9)" />
+          <SvgCircle cx={route.endX} cy={route.endY} r={featured ? 8 : 6} fill="rgba(255,255,255,0.25)" />
+          <SvgCircle cx={route.endX} cy={route.endY} r={featured ? 4.5 : 3.5} fill="white" />
+          <Rect x={0} y={thumbH * 0.58} width={cardW} height={thumbH * 0.42} fill="rgba(0,0,0,0.38)" />
         </Svg>
 
         {/* Top badges */}
-        <View style={styles.thumbTop}>
-          <View style={styles.typeBadge}>
+        <View className="flex-row justify-between items-center p-2">
+          <View className="flex-row items-center gap-1 bg-black/[0.28] px-[7px] py-1 rounded-full">
             <Icon name={TYPE_ICON[activity.type]} size={featured ? 13 : 11} color="white" />
             {featured && (
-              <Text style={styles.typeBadgeText}>{getActivityLabel(activity.type)}</Text>
+              <Text className="text-white text-[10px] font-inter-semibold">
+                {getActivityLabel(activity.type)}
+              </Text>
             )}
           </View>
-          <View style={styles.fourKBadge}>
+          <View className="flex-row items-center gap-[3px] bg-black/[0.28] px-1.5 py-1 rounded-full">
             <Icon name="videocam" size={9} color="white" />
-            <Text style={styles.fourKText}>4K</Text>
+            <Text className="text-white text-[9px] font-inter-bold">4K</Text>
           </View>
         </View>
 
-        {/* Distance overlay — bottom of thumbnail */}
-        <View style={styles.thumbBottom}>
-          <Text style={[styles.distOverlay, { fontSize: featured ? 28 : 22 }]}>
+        {/* Distance overlay */}
+        <View className="p-2 pb-2.5">
+          <Text className="text-white font-inter-bold" style={{ fontSize: featured ? 28 : 22 }}>
             {distKm}
-            <Text style={styles.distOverlayUnit}> km</Text>
+            <Text className="text-xs font-inter-medium text-white/85"> km</Text>
           </Text>
         </View>
       </View>
 
       {/* Info strip */}
-      <View style={[styles.infoStrip, { backgroundColor: colors.card }]}>
-        <Text style={[styles.actName, { color: colors.foreground }]} numberOfLines={1}>
+      <View className="px-2.5 pt-2 pb-2 gap-[3px]" style={{ backgroundColor: colors.card }}>
+        <Text className="text-xs font-inter-bold leading-4" style={{ color: colors.foreground }} numberOfLines={1}>
           {getActivityName(activity)}
         </Text>
-        <Text style={[styles.actDate, { color: colors.mutedForeground }]}>
+        <Text className="text-[10px] font-inter-regular mb-1" style={{ color: colors.mutedForeground }}>
           {getActivityDate(activity.startTime)} · {timeStr}
         </Text>
 
         {/* Stats row */}
-        <View style={styles.miniStats}>
-          <View style={styles.miniStat}>
+        <View className="flex-row items-center gap-[5px] mb-2">
+          <View className="flex-row items-center gap-[3px]">
             <Icon name="timer-outline" size={11} color={gradient[1]} />
-            <Text style={[styles.miniStatText, { color: colors.foreground }]}>
+            <Text className="text-[11px] font-inter-semibold" style={{ color: colors.foreground }}>
               {formatDuration(activity.duration)}
             </Text>
           </View>
-          <View style={[styles.miniStatDivider, { backgroundColor: colors.border }]} />
-          <View style={styles.miniStat}>
+          <View className="w-px h-[10px] rounded-sm" style={{ backgroundColor: colors.border }} />
+          <View className="flex-row items-center gap-[3px]">
             <Icon name="flash" size={11} color="#088395" />
-            <Text style={[styles.miniStatText, { color: colors.foreground }]}>
-              {activity.avgSpeed.toFixed(1)}<Text style={{ color: colors.mutedForeground, fontSize: 9 }}> km/h</Text>
+            <Text className="text-[11px] font-inter-semibold" style={{ color: colors.foreground }}>
+              {activity.avgSpeed.toFixed(1)}<Text className="text-[9px]" style={{ color: colors.mutedForeground }}> km/h</Text>
             </Text>
           </View>
           {featured && (
             <>
-              <View style={[styles.miniStatDivider, { backgroundColor: colors.border }]} />
-              <View style={styles.miniStat}>
+              <View className="w-px h-[10px] rounded-sm" style={{ backgroundColor: colors.border }} />
+              <View className="flex-row items-center gap-[3px]">
                 <Icon name="trending-up" size={11} color="#982598" />
-                <Text style={[styles.miniStatText, { color: colors.foreground }]}>
-                  +{activity.elevationGain}<Text style={{ color: colors.mutedForeground, fontSize: 9 }}> m</Text>
+                <Text className="text-[11px] font-inter-semibold" style={{ color: colors.foreground }}>
+                  +{activity.elevationGain}<Text className="text-[9px]" style={{ color: colors.mutedForeground }}> m</Text>
                 </Text>
               </View>
             </>
@@ -251,19 +231,28 @@ function ActivityCard({ activity, featured }: { activity: Activity; featured?: b
         </View>
 
         {/* Action row */}
-        <View style={styles.actionRow}>
+        <View className="flex-row items-center gap-1.5">
           <TouchableOpacity
-            style={[styles.playPill, { backgroundColor: gradient[1] }]}
+            className="flex-row items-center gap-1 px-2.5 py-[5px] rounded-full"
+            style={{ backgroundColor: gradient[1] }}
             activeOpacity={0.85}
           >
             <Icon name="play" size={10} color="white" />
-            <Text style={styles.playPillText}>Play</Text>
+            <Text className="text-white text-[10px] font-inter-semibold">Play</Text>
           </TouchableOpacity>
-          <View style={{ flex: 1 }} />
-          <TouchableOpacity style={[styles.iconBtn, { borderColor: colors.border }]} activeOpacity={0.7}>
+          <View className="flex-1" />
+          <TouchableOpacity
+            className="w-7 h-7 rounded-lg border items-center justify-center"
+            style={{ borderColor: colors.border }}
+            activeOpacity={0.7}
+          >
             <Icon name="share-outline" size={13} color={gradient[1]} />
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.iconBtn, { borderColor: colors.border }]} activeOpacity={0.7}>
+          <TouchableOpacity
+            className="w-7 h-7 rounded-lg border items-center justify-center"
+            style={{ borderColor: colors.border }}
+            activeOpacity={0.7}
+          >
             <Icon name="ellipsis-horizontal" size={13} color={colors.mutedForeground} />
           </TouchableOpacity>
         </View>
@@ -286,12 +275,10 @@ export default function DashboardScreen() {
   const weeklyGoal = 50;
   const progress = Math.min((totalDistKm / weeklyGoal) * 100, 100);
 
-  // First card is full-width "featured", rest go in 2-column pairs
   const recent = activities.slice(0, 7);
   const featured = recent[0];
   const grid = recent.slice(1);
 
-  // Pair grid items into rows of 2
   const rows: Activity[][] = [];
   for (let i = 0; i < grid.length; i += 2) {
     rows.push(grid.slice(i, i + 2));
@@ -301,40 +288,46 @@ export default function DashboardScreen() {
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      className="flex-1"
+      style={{ backgroundColor: colors.background }}
       contentContainerStyle={{ paddingBottom: 100 }}
       showsVerticalScrollIndicator={false}
     >
       <View style={{ paddingTop: topPadding }}>
         {/* Header */}
-        <View style={styles.header}>
+        <View className="flex-row justify-between items-center px-5 pt-3 pb-4">
           <View>
-            <Text style={[styles.greeting, { color: colors.mutedForeground }]}>
+            <Text className="text-sm font-inter-regular" style={{ color: colors.mutedForeground }}>
               Good morning, Alex
             </Text>
-            <Text style={[styles.title, { color: colors.foreground }]}>Your Journey</Text>
+            <Text className="text-[26px] font-inter-bold mt-0.5" style={{ color: colors.foreground }}>
+              Your Journey
+            </Text>
           </View>
-          <TouchableOpacity style={[styles.bellBtn, { backgroundColor: colors.primary }]}>
+          <TouchableOpacity
+            className="w-10 h-10 rounded-full items-center justify-center"
+            style={{ backgroundColor: colors.primary }}
+          >
             <Icon name="notifications-outline" size={20} color="white" />
-            <View style={styles.notifDot} />
+            <View className="absolute top-[7px] right-2 w-2 h-2 rounded-full bg-destructive border-[1.5px] border-primary" />
           </TouchableOpacity>
         </View>
 
         {/* Week card */}
-        <View style={styles.weekCard}>
-          <LinearGradient colors={["#2A3A2A", "#1A2A1A"]} style={styles.weekGradient}>
-            <View style={styles.weekTop}>
-              <Text style={styles.weekLabel}>This Week</Text>
-              <View style={styles.weekBadge}>
+        <View className="mx-4 rounded-[20px] overflow-hidden mb-6">
+          <LinearGradient colors={["#2A3A2A", "#1A2A1A"]} className="p-5">
+            <View className="flex-row justify-between items-center mb-2">
+              <Text className="text-[13px] font-inter-medium text-white/60">This Week</Text>
+              <View className="flex-row items-center gap-1 bg-primary/20 px-2 py-1 rounded-full">
                 <Icon name="trending-up" size={12} color="#6D9E51" />
-                <Text style={styles.weekBadgeText}>+12% vs last week</Text>
+                <Text className="text-primary text-[11px] font-inter-semibold">+12% vs last week</Text>
               </View>
             </View>
-            <Text style={styles.weekDistance}>
+            <Text className="text-[46px] font-inter-bold text-white mb-3">
               {totalDistKm.toFixed(1)}
-              <Text style={styles.weekUnit}> km</Text>
+              <Text className="text-[22px] text-white/70"> km</Text>
             </Text>
-            <View style={styles.weekStats}>
+            <View className="flex-row justify-between mb-4">
               {[
                 { label: "Activities", value: String(weekActivities.length) },
                 {
@@ -346,62 +339,57 @@ export default function DashboardScreen() {
                 { label: "Top Speed", value: `${topSpeed.toFixed(1)}` },
                 { label: "Videos", value: String(weekActivities.length) },
               ].map((s) => (
-                <View key={s.label} style={styles.weekStatItem}>
-                  <Text style={styles.weekStatValue}>{s.value}</Text>
-                  <Text style={styles.weekStatLabel}>{s.label}</Text>
+                <View key={s.label} className="items-center">
+                  <Text className="text-white text-base font-inter-bold">{s.value}</Text>
+                  <Text className="text-white/50 text-[10px] font-inter-regular mt-0.5">{s.label}</Text>
                 </View>
               ))}
             </View>
-            <View style={styles.goalRow}>
-              <Text style={styles.goalLabel}>Weekly goal: {weeklyGoal} km</Text>
-              <Text style={styles.goalPct}>{Math.round(progress)}%</Text>
+            <View className="flex-row justify-between mb-1.5">
+              <Text className="text-white/50 text-[11px] font-inter-regular">Weekly goal: {weeklyGoal} km</Text>
+              <Text className="text-primary text-[11px] font-inter-semibold">{Math.round(progress)}%</Text>
             </View>
-            <View style={[styles.progressTrack, { backgroundColor: "rgba(255,255,255,0.12)" }]}>
+            <View className="h-1.5 rounded-[3px] overflow-hidden bg-white/[0.12]">
               <View
-                style={[
-                  styles.progressFill,
-                  { width: `${progress}%` as any, backgroundColor: "#6D9E51" },
-                ]}
+                className="h-1.5 rounded-[3px] bg-primary"
+                style={{ width: `${progress}%` as any }}
               />
             </View>
           </LinearGradient>
         </View>
 
         {/* Section header */}
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+        <View className="flex-row justify-between items-center px-5 mb-3.5">
+          <Text className="text-lg font-inter-bold" style={{ color: colors.foreground }}>
             Recent Activities
           </Text>
-          <TouchableOpacity style={styles.seeAllBtn}>
-            <Text style={[styles.seeAll, { color: colors.primary }]}>See all</Text>
+          <TouchableOpacity className="flex-row items-center gap-0.5">
+            <Text className="text-[13px] font-inter-semibold" style={{ color: colors.primary }}>See all</Text>
             <Icon name="chevron-forward" size={14} color={colors.primary} />
           </TouchableOpacity>
         </View>
 
         {recent.length === 0 ? (
-          <View style={styles.emptyState}>
-            <View style={[styles.emptyIcon, { backgroundColor: `${colors.primary}12` }]}>
+          <View className="items-center gap-2.5 px-10 py-12">
+            <View
+              className="w-[72px] h-[72px] rounded-[20px] items-center justify-center mb-1"
+              style={{ backgroundColor: `${colors.primary}12` }}
+            >
               <Icon name="map-outline" size={36} color={colors.primary} />
             </View>
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No activities yet</Text>
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+            <Text className="text-lg font-inter-bold" style={{ color: colors.foreground }}>No activities yet</Text>
+            <Text className="text-sm font-inter-regular text-center leading-5" style={{ color: colors.mutedForeground }}>
               Tap the record button to start your first journey!
             </Text>
           </View>
         ) : (
-          <View style={styles.gridOuter}>
-            {/* Featured full-width card */}
-            {featured && (
-              <ActivityCard activity={featured} featured />
-            )}
-
-            {/* 2-column grid rows */}
+          <View className="gap-[10px]" style={{ paddingHorizontal: GRID_PAD }}>
+            {featured && <ActivityCard activity={featured} featured />}
             {rows.map((row, ri) => (
-              <View key={ri} style={styles.gridRow}>
+              <View key={ri} className="flex-row gap-[10px]">
                 {row.map((a) => (
                   <ActivityCard key={a.id} activity={a} />
                 ))}
-                {/* Spacer if odd item in last row */}
                 {row.length === 1 && <View style={{ width: CARD_W }} />}
               </View>
             ))}
@@ -411,235 +399,3 @@ export default function DashboardScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 16,
-  },
-  greeting: { fontSize: 14, fontFamily: "Inter_400Regular" },
-  title: { fontSize: 26, fontFamily: "Inter_700Bold", marginTop: 2 },
-  bellBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  notifDot: {
-    position: "absolute",
-    top: 7,
-    right: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#FF4444",
-    borderWidth: 1.5,
-    borderColor: "#6D9E51",
-  },
-  weekCard: {
-    marginHorizontal: 16,
-    borderRadius: 20,
-    overflow: "hidden",
-    marginBottom: 24,
-  },
-  weekGradient: { padding: 20 },
-  weekTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  weekLabel: { color: "rgba(255,255,255,0.6)", fontSize: 13, fontFamily: "Inter_500Medium" },
-  weekBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: "rgba(109,158,81,0.2)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  weekBadgeText: { color: "#6D9E51", fontSize: 11, fontFamily: "Inter_600SemiBold" },
-  weekDistance: { color: "white", fontSize: 46, fontFamily: "Inter_700Bold", marginBottom: 12 },
-  weekUnit: { fontSize: 22, color: "rgba(255,255,255,0.7)" },
-  weekStats: { flexDirection: "row", justifyContent: "space-between", marginBottom: 16 },
-  weekStatItem: { alignItems: "center" },
-  weekStatValue: { color: "white", fontSize: 16, fontFamily: "Inter_700Bold" },
-  weekStatLabel: {
-    color: "rgba(255,255,255,0.5)",
-    fontSize: 10,
-    fontFamily: "Inter_400Regular",
-    marginTop: 2,
-  },
-  goalRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 6 },
-  goalLabel: { color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: "Inter_400Regular" },
-  goalPct: { color: "#6D9E51", fontSize: 11, fontFamily: "Inter_600SemiBold" },
-  progressTrack: { height: 6, borderRadius: 3, overflow: "hidden" },
-  progressFill: { height: 6, borderRadius: 3 },
-
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    marginBottom: 14,
-  },
-  sectionTitle: { fontSize: 18, fontFamily: "Inter_700Bold" },
-  seeAllBtn: { flexDirection: "row", alignItems: "center", gap: 2 },
-  seeAll: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
-
-  /* ─── Grid layout ─── */
-  gridOuter: {
-    paddingHorizontal: GRID_PAD,
-    gap: GRID_GAP,
-  },
-  gridRow: {
-    flexDirection: "row",
-    gap: GRID_GAP,
-  },
-
-  /* ─── Activity Card ─── */
-  card: {
-    borderRadius: 16,
-    overflow: "hidden",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.14,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  thumb: {
-    width: "100%",
-    overflow: "hidden",
-    justifyContent: "space-between",
-  },
-  thumbTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 8,
-  },
-  typeBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: "rgba(0,0,0,0.28)",
-    paddingHorizontal: 7,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  typeBadgeText: {
-    color: "white",
-    fontSize: 10,
-    fontFamily: "Inter_600SemiBold",
-  },
-  fourKBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    backgroundColor: "rgba(0,0,0,0.28)",
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  fourKText: { color: "white", fontSize: 9, fontFamily: "Inter_700Bold" },
-  thumbBottom: {
-    padding: 8,
-    paddingBottom: 10,
-  },
-  distOverlay: {
-    color: "white",
-    fontFamily: "Inter_700Bold",
-  },
-  distOverlayUnit: {
-    fontSize: 12,
-    fontFamily: "Inter_500Medium",
-    color: "rgba(255,255,255,0.85)",
-  },
-
-  /* ─── Info strip ─── */
-  infoStrip: {
-    paddingHorizontal: 10,
-    paddingTop: 8,
-    paddingBottom: 8,
-    gap: 3,
-  },
-  actName: {
-    fontSize: 12,
-    fontFamily: "Inter_700Bold",
-    lineHeight: 16,
-  },
-  actDate: {
-    fontSize: 10,
-    fontFamily: "Inter_400Regular",
-    marginBottom: 4,
-  },
-  miniStats: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    marginBottom: 8,
-  },
-  miniStat: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-  },
-  miniStatText: {
-    fontSize: 11,
-    fontFamily: "Inter_600SemiBold",
-  },
-  miniStatDivider: {
-    width: 1,
-    height: 10,
-    borderRadius: 1,
-  },
-  actionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  playPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
-  },
-  playPillText: {
-    color: "white",
-    fontSize: 10,
-    fontFamily: "Inter_600SemiBold",
-  },
-  iconBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  emptyState: { alignItems: "center", gap: 10, paddingHorizontal: 40, paddingVertical: 48 },
-  emptyIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 4,
-  },
-  emptyTitle: { fontSize: 18, fontFamily: "Inter_700Bold" },
-  emptyText: {
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    textAlign: "center",
-    lineHeight: 20,
-  },
-});

@@ -49,6 +49,18 @@ metro.config.js            # Resolves react-native-maps to web stub on platform=
 - `components/Icon.tsx` maps Ionicons-style names (e.g. `"play"`, `"map-outline"`) to Lucide SVG components
 - `@expo/vector-icons` has been removed from the project
 
+### NativeWind v4 (Styling)
+- **NativeWind v4** (`nativewind@4.2.3`) + **tailwindcss v3** (v3 is required — NativeWind v4 does NOT support tailwindcss v4)
+- `react-native-css-interop` must be a **direct** dependency (pnpm doesn't hoist transitive deps, Metro can't resolve it otherwise)
+- `tailwind.config.js` — custom colors (`primary`, `accent`, `trace`, etc.) + custom font families (`inter-regular/medium/semibold/bold`)
+- `global.css` — imported as first line of `app/_layout.tsx`
+- `babel.config.js` — `jsxImportSource: "nativewind"` in babel-preset-expo + `"nativewind/babel"` preset
+- `metro.config.js` — wrapped with `withNativeWind(config, { input: "./global.css" })`
+- `nativewind-env.d.ts` — `/// <reference types="nativewind/types" />` referenced in `tsconfig.json`
+- **Hybrid pattern**: static layout/spacing/typography → `className`; dynamic theme colors from `useColors()` + computed sizes → `style` prop; Animated transforms → must stay `style` (native driver)
+- SVG elements (`Path`, `Circle`, `Rect`) don't accept `className` — keep as style props
+- Font families: `className="font-inter-bold"` → `fontFamily: 'Inter_700Bold'` (configured in tailwind.config.js)
+
 ### Dependencies (notable)
 - `expo ~54.0.27`
 - `react-native 0.81.5`
@@ -59,6 +71,9 @@ metro.config.js            # Resolves react-native-maps to web stub on platform=
 - `expo-linear-gradient ~15.0.8`
 - `@react-native-async-storage/async-storage 2.2.0`
 - `expo-haptics ~15.0.8`
+- `nativewind 4.2.3` (utility-first CSS for React Native)
+- `tailwindcss 3.x` (NativeWind v4 requires v3, NOT v4)
+- `react-native-css-interop ^0.2.3` (direct dep — needed by NativeWind, not auto-hoisted by pnpm)
 
 ## GitHub Mirror
 - **Repo**: https://github.com/rubel-sh/relivee-journey

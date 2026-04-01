@@ -1,3 +1,4 @@
+import "../global.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as Font from "expo-font";
 import { Stack } from "expo-router";
