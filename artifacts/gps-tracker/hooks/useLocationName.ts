@@ -6,6 +6,9 @@ const NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse";
 
 let memoryCache: Record<string, string> = {};
 let cacheLoaded = false;
+const inflight: Record<string, Promise<string>> = {};
+let lastRequestTime = 0;
+const MIN_DELAY_MS = 1100;
 
 async function loadCache() {
   if (cacheLoaded) return;
@@ -26,35 +29,56 @@ function cacheKey(lat: number, lon: number): string {
   return `${lat.toFixed(3)},${lon.toFixed(3)}`;
 }
 
+async function throttledFetch(lat: number, lon: number): Promise<string> {
+  const now = Date.now();
+  const wait = Math.max(0, lastRequestTime + MIN_DELAY_MS - now);
+  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  lastRequestTime = Date.now();
+
+  const res = await fetch(
+    `${NOMINATIM_URL}?lat=${lat}&lon=${lon}&format=json&zoom=14&addressdetails=1`,
+    { headers: { "User-Agent": "JourneyGPSTracker/1.0" } }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Geocode ${res.status}`);
+  }
+
+  const data = await res.json();
+  const addr = data.address || {};
+  return (
+    addr.suburb ||
+    addr.neighbourhood ||
+    addr.village ||
+    addr.town ||
+    addr.city_district ||
+    addr.city ||
+    addr.county ||
+    data.display_name?.split(",")[0] ||
+    "Unknown"
+  );
+}
+
 async function reverseGeocode(lat: number, lon: number): Promise<string> {
   const key = cacheKey(lat, lon);
   await loadCache();
   if (memoryCache[key]) return memoryCache[key];
 
-  try {
-    const res = await fetch(
-      `${NOMINATIM_URL}?lat=${lat}&lon=${lon}&format=json&zoom=14&addressdetails=1`,
-      { headers: { "User-Agent": "JourneyGPSTracker/1.0" } }
-    );
-    const data = await res.json();
-    const addr = data.address || {};
-    const name =
-      addr.suburb ||
-      addr.neighbourhood ||
-      addr.village ||
-      addr.town ||
-      addr.city_district ||
-      addr.city ||
-      addr.county ||
-      data.display_name?.split(",")[0] ||
-      "Unknown";
+  if (inflight[key]) return inflight[key];
 
-    memoryCache[key] = name;
-    saveCache();
-    return name;
-  } catch {
-    return "Unknown";
-  }
+  const promise = throttledFetch(lat, lon)
+    .then((name) => {
+      memoryCache[key] = name;
+      saveCache();
+      return name;
+    })
+    .catch(() => "Unknown")
+    .finally(() => {
+      delete inflight[key];
+    });
+
+  inflight[key] = promise;
+  return promise;
 }
 
 export function useLocationName(lat?: number, lon?: number): string | null {

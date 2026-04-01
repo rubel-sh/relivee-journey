@@ -23,6 +23,7 @@ const GRID_PAD = 16;
 const GRID_GAP = 10;
 const CARD_W = (SCREEN_W - GRID_PAD * 2 - GRID_GAP) / 2;
 const THUMB_H = Math.round(CARD_W * 0.9);
+const HCARD_THUMB = 110;
 
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -114,12 +115,11 @@ const TYPE_ICON: Record<Activity["type"], string> = {
   walk: "footsteps",
 };
 
-function ActivityCard({ activity, featured }: { activity: Activity; featured?: boolean }) {
+function ActivityCard({ activity }: { activity: Activity }) {
   const colors = useColors();
   const gradient = TYPE_GRADIENT[activity.type];
-  const cardW = featured ? SCREEN_W - GRID_PAD * 2 : CARD_W;
-  const thumbH = featured ? Math.round(cardW * 0.52) : THUMB_H;
-  const route = buildRoute(activity.id, cardW, thumbH);
+  const thumbSize = HCARD_THUMB;
+  const route = buildRoute(activity.id, thumbSize, thumbSize);
   const distKm = (activity.distance / 1000).toFixed(2);
   const timeStr = new Date(activity.startTime).toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -137,141 +137,106 @@ function ActivityCard({ activity, featured }: { activity: Activity; featured?: b
 
   return (
     <TouchableOpacity
-      className="rounded-2xl overflow-hidden"
-      style={{ backgroundColor: colors.card, shadowColor: gradient[2], width: cardW, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.14, shadowRadius: 12, elevation: 5 }}
+      className="flex-row rounded-2xl overflow-hidden"
+      style={{
+        backgroundColor: colors.card,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.08,
+        shadowRadius: 10,
+        elevation: 4,
+      }}
       onPress={() => router.push(`/activity/${activity.id}` as any)}
       activeOpacity={0.93}
     >
-      {/* Thumbnail */}
-      <View className="w-full overflow-hidden justify-between" style={{ height: thumbH }}>
+      <View className="overflow-hidden rounded-2xl" style={{ width: thumbSize, height: thumbSize, margin: 10 }}>
         <LinearGradient
           colors={gradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
         />
-
-        {/* SVG route */}
         <Svg
-          width={cardW}
-          height={thumbH}
+          width={thumbSize}
+          height={thumbSize}
           style={StyleSheet.absoluteFill}
-          viewBox={`0 0 ${cardW} ${thumbH}`}
+          viewBox={`0 0 ${thumbSize} ${thumbSize}`}
         >
           <Path
             d={route.path}
-            stroke="rgba(255,255,255,0.22)"
-            strokeWidth={featured ? 5 : 3.5}
+            stroke="rgba(255,255,255,0.25)"
+            strokeWidth={4}
             fill="none"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
           <Path
             d={route.path}
-            stroke="rgba(255,255,255,0.7)"
-            strokeWidth={featured ? 2 : 1.5}
+            stroke="rgba(255,255,255,0.75)"
+            strokeWidth={2}
             fill="none"
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeDasharray="5 4"
           />
-          <SvgCircle cx={route.startX} cy={route.startY} r={featured ? 5 : 4} fill="rgba(255,255,255,0.9)" />
-          <SvgCircle cx={route.endX} cy={route.endY} r={featured ? 8 : 6} fill="rgba(255,255,255,0.25)" />
-          <SvgCircle cx={route.endX} cy={route.endY} r={featured ? 4.5 : 3.5} fill="white" />
-          <Rect x={0} y={thumbH * 0.58} width={cardW} height={thumbH * 0.42} fill="rgba(0,0,0,0.38)" />
+          <SvgCircle cx={route.startX} cy={route.startY} r={4} fill="rgba(255,255,255,0.9)" />
+          <SvgCircle cx={route.endX} cy={route.endY} r={6} fill="rgba(255,255,255,0.25)" />
+          <SvgCircle cx={route.endX} cy={route.endY} r={3.5} fill="white" />
         </Svg>
-
-        {/* Top badge */}
-        <View className="flex-row justify-between items-center p-2">
-          <View className="flex-row items-center gap-1 bg-black/[0.28] px-[7px] py-1 rounded-full">
-            <Icon name={TYPE_ICON[activity.type]} size={featured ? 13 : 11} color="white" />
-            {featured && (
-              <Text className="text-white text-[10px] font-inter-semibold">
-                {getActivityLabel(activity.type)}
-              </Text>
-            )}
-          </View>
-        </View>
-
-        {/* Distance + location overlay */}
-        <View className="px-2.5 pb-2.5" style={{ paddingTop: featured ? 4 : 2 }}>
-          {locationLabel ? (
-            <Text
-              className="text-white/80 font-inter-medium mb-0.5"
-              style={{ fontSize: featured ? 11 : 9 }}
-              numberOfLines={1}
-            >
-              {locationLabel}
-            </Text>
-          ) : null}
-          <Text className="text-white font-inter-bold" style={{ fontSize: featured ? 28 : 20, lineHeight: featured ? 34 : 26 }}>
-            {distKm}
-            <Text style={{ fontSize: 12 }} className="font-inter-medium text-white/85"> km</Text>
+        <View className="absolute top-1.5 left-1.5 flex-row items-center gap-1 bg-black/30 px-1.5 py-0.5 rounded-full">
+          <Icon name={TYPE_ICON[activity.type]} size={11} color="white" />
+          <Text className="text-white text-[9px] font-inter-semibold">
+            {getActivityLabel(activity.type)}
           </Text>
         </View>
       </View>
 
-      {/* Info strip */}
-      <View className="px-2.5 pt-2 pb-2 gap-[3px]" style={{ backgroundColor: colors.card }}>
-        <Text className="text-xs font-inter-bold leading-4" style={{ color: colors.foreground }} numberOfLines={1}>
+      <View className="flex-1 py-2.5 pr-3.5 justify-center">
+        <Text className="text-[17px] font-inter-bold leading-[22px]" style={{ color: colors.foreground }} numberOfLines={1}>
           {getActivityName(activity)}
         </Text>
-        <Text className="text-[10px] font-inter-regular mb-1" style={{ color: colors.mutedForeground }}>
-          {getActivityDate(activity.startTime)} · {timeStr}
+
+        <Text
+          className="font-inter-medium mt-0.5"
+          style={{ fontSize: 13, color: colors.mutedForeground }}
+          numberOfLines={1}
+        >
+          {locationLabel
+            ? locationLabel
+            : `${getActivityDate(activity.startTime)} · ${timeStr}`}
         </Text>
 
-        {/* Stats row */}
-        <View className="flex-row items-center gap-[5px] mb-2">
-          <View className="flex-row items-center gap-[3px]">
-            <Icon name="timer-outline" size={11} color={gradient[1]} />
-            <Text className="text-[11px] font-inter-semibold" style={{ color: colors.foreground }}>
-              {formatDuration(activity.duration)}
-            </Text>
-          </View>
-          <View className="w-px h-[10px] rounded-sm" style={{ backgroundColor: colors.border }} />
-          <View className="flex-row items-center gap-[3px]">
-            <Icon name="flash" size={11} color="#088395" />
-            <Text className="text-[11px] font-inter-semibold" style={{ color: colors.foreground }}>
-              {activity.avgSpeed.toFixed(1)}<Text className="text-[9px]" style={{ color: colors.mutedForeground }}> km/h</Text>
-            </Text>
-          </View>
-          {featured && (
-            <>
-              <View className="w-px h-[10px] rounded-sm" style={{ backgroundColor: colors.border }} />
-              <View className="flex-row items-center gap-[3px]">
-                <Icon name="trending-up" size={11} color="#982598" />
-                <Text className="text-[11px] font-inter-semibold" style={{ color: colors.foreground }}>
-                  +{activity.elevationGain}<Text className="text-[9px]" style={{ color: colors.mutedForeground }}> m</Text>
-                </Text>
-              </View>
-            </>
-          )}
-        </View>
+        <Text className="font-inter-bold mt-1.5" style={{ fontSize: 22, lineHeight: 26, color: gradient[2] }}>
+          {distKm}
+          <Text style={{ fontSize: 14 }} className="font-inter-medium"> km</Text>
+        </Text>
 
-        {/* Action row */}
-        <View className="flex-row items-center gap-1.5">
+        <View className="flex-row items-center justify-between mt-2">
+          <View className="flex-row items-center gap-3">
+            <View className="flex-row items-center gap-1">
+              <Icon name="timer-outline" size={13} color={gradient[1]} />
+              <Text className="text-[13px] font-inter-semibold" style={{ color: colors.foreground }}>
+                {formatDuration(activity.duration)}
+              </Text>
+            </View>
+            <View className="flex-row items-center gap-1">
+              <Icon name="flash" size={13} color="#088395" />
+              <Text className="text-[13px] font-inter-semibold" style={{ color: colors.foreground }}>
+                {activity.avgSpeed.toFixed(1)}
+                <Text className="text-[11px]" style={{ color: colors.mutedForeground }}> km/h</Text>
+              </Text>
+            </View>
+          </View>
           <TouchableOpacity
-            className="flex-row items-center gap-1 px-2.5 py-[5px] rounded-full"
+            className="w-8 h-8 rounded-full items-center justify-center"
             style={{ backgroundColor: gradient[1] }}
-            activeOpacity={0.85}
+            activeOpacity={0.8}
+            onPress={(e) => {
+              e.stopPropagation();
+              router.push(`/activity/${activity.id}` as any);
+            }}
           >
-            <Icon name="play" size={10} color="white" />
-            <Text className="text-white text-[10px] font-inter-semibold">Play</Text>
-          </TouchableOpacity>
-          <View className="flex-1" />
-          <TouchableOpacity
-            className="w-7 h-7 rounded-lg border items-center justify-center"
-            style={{ borderColor: colors.border }}
-            activeOpacity={0.7}
-          >
-            <Icon name="share-outline" size={13} color={gradient[1]} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            className="w-7 h-7 rounded-lg border items-center justify-center"
-            style={{ borderColor: colors.border }}
-            activeOpacity={0.7}
-          >
-            <Icon name="ellipsis-horizontal" size={13} color={colors.mutedForeground} />
+            <Icon name="chevron-forward" size={16} color="white" />
           </TouchableOpacity>
         </View>
       </View>
@@ -294,13 +259,6 @@ export default function DashboardScreen() {
   const progress = Math.min((totalDistKm / weeklyGoal) * 100, 100);
 
   const recent = activities.slice(0, 7);
-  const featured = recent[0];
-  const grid = recent.slice(1);
-
-  const rows: Activity[][] = [];
-  for (let i = 0; i < grid.length; i += 2) {
-    rows.push(grid.slice(i, i + 2));
-  }
 
   const topPadding = isWeb ? 67 : insets.top;
 
@@ -401,15 +359,9 @@ export default function DashboardScreen() {
             </Text>
           </View>
         ) : (
-          <View className="gap-[10px]" style={{ paddingHorizontal: GRID_PAD }}>
-            {featured && <ActivityCard activity={featured} featured />}
-            {rows.map((row, ri) => (
-              <View key={ri} className="flex-row gap-[10px]">
-                {row.map((a) => (
-                  <ActivityCard key={a.id} activity={a} />
-                ))}
-                {row.length === 1 && <View style={{ width: CARD_W }} />}
-              </View>
+          <View className="gap-3" style={{ paddingHorizontal: GRID_PAD }}>
+            {recent.map((a) => (
+              <ActivityCard key={a.id} activity={a} />
             ))}
           </View>
         )}
