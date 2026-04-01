@@ -459,8 +459,8 @@ canvas{display:block}
     const recordingPromise = new Promise(r => { recordingResolve = r; });
 
     const stream = finalCanvas.captureStream(0);
-    const mimeTypes = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4'];
-    let selectedMime = 'video/webm';
+    const mimeTypes = ['video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+    let selectedMime = 'video/mp4';
     for (const mt of mimeTypes) {
       if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(mt)) {
         selectedMime = mt;
