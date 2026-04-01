@@ -2,6 +2,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
 import {
+  Alert,
   Dimensions,
   Platform,
   ScrollView,
@@ -14,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Icon } from "@/components/Icon";
 import { Activity, Coordinate, useActivities } from "@/context/ActivityContext";
+import { GeneratedVideo, useVideos } from "@/context/VideoContext";
 import { useColors } from "@/hooks/useColors";
 
 const TYPE_GRADIENT: Record<string, [string, string]> = {
@@ -48,6 +50,12 @@ function getTimeOfDay(ts: number) {
   return h < 12 ? "Morning" : h < 17 ? "Afternoon" : "Evening";
 }
 
+function formatFileSize(bytes: number) {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const GAP = 12;
 const H_PAD = 16;
@@ -78,15 +86,135 @@ function buildMiniPath(coords: Coordinate[], w: number, h: number): string | nul
   return d;
 }
 
-function VideoCard({ activity }: { activity: Activity }) {
+function GeneratedVideoCard({
+  video,
+  activity,
+}: {
+  video: GeneratedVideo;
+  activity: Activity;
+}) {
   const colors = useColors();
+  const { deleteVideo } = useVideos();
+  const gradient = (TYPE_GRADIENT[activity.type] ?? ["#6D9E51", "#088395"]) as [string, string];
+  const label = TYPE_LABEL[activity.type] ?? "Activity";
+  const tod = getTimeOfDay(activity.startTime);
+  const miniPath = buildMiniPath(activity.coordinates, SCREEN_WIDTH - H_PAD * 2 - 32, 140);
+
+  const handleDelete = () => {
+    Alert.alert(
+      "Delete Video",
+      "Are you sure you want to delete this generated video?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => deleteVideo(video.id),
+        },
+      ]
+    );
+  };
+
+  const handleWatch = () => {
+    router.push(`/video-replay/${activity.id}`);
+  };
+
+  return (
+    <View
+      className="rounded-2xl border overflow-hidden"
+      style={{
+        backgroundColor: colors.card,
+        borderColor: colors.border,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.07,
+        shadowRadius: 8,
+        elevation: 3,
+      }}
+    >
+      <TouchableOpacity activeOpacity={0.85} onPress={handleWatch}>
+        <LinearGradient
+          colors={gradient}
+          style={{ height: 180, justifyContent: "center", alignItems: "center" }}
+        >
+          {miniPath && (
+            <View className="absolute inset-0 items-center justify-center" style={{ opacity: 0.25 }}>
+              <Svg width={SCREEN_WIDTH - H_PAD * 2 - 32} height={140}>
+                <Path d={miniPath} fill="none" stroke="white" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+            </View>
+          )}
+
+          <View className="w-16 h-16 rounded-full bg-black/30 items-center justify-center border-2 border-white/50">
+            <Icon name="play" size={28} color="white" />
+          </View>
+
+          <View className="absolute top-3 left-3">
+            <View className="flex-row items-center gap-1 bg-black/40 px-2.5 py-1 rounded-lg">
+              <Icon name={TYPE_ICON[activity.type]} size={12} color="white" />
+              <Text className="text-white text-[11px] font-inter-bold">{label}</Text>
+            </View>
+          </View>
+
+          <View className="absolute top-3 right-3 flex-row items-center gap-1 bg-black/40 px-2.5 py-1 rounded-lg">
+            <Icon name="film" size={11} color="white" />
+            <Text className="text-white text-[11px] font-inter-bold">3D Video</Text>
+          </View>
+
+          <View className="absolute bottom-3 left-3 right-3 flex-row justify-between">
+            <Text className="text-white/80 text-[10px] font-inter-semibold bg-black/40 px-2 py-1 rounded-md">
+              {(activity.distance / 1000).toFixed(1)} km
+            </Text>
+            <Text className="text-white/80 text-[10px] font-inter-semibold bg-black/40 px-2 py-1 rounded-md">
+              {formatFileSize(video.fileSize)}
+            </Text>
+          </View>
+        </LinearGradient>
+      </TouchableOpacity>
+
+      <View className="p-3 gap-1.5">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-[15px] font-inter-bold flex-1" style={{ color: colors.foreground }} numberOfLines={1}>
+            {tod} {label}
+          </Text>
+          <TouchableOpacity onPress={handleDelete} className="p-1">
+            <Icon name="trash" size={16} color={colors.mutedForeground} />
+          </TouchableOpacity>
+        </View>
+
+        <Text className="text-[11px] font-inter-regular" style={{ color: colors.mutedForeground }}>
+          Generated {new Date(video.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+          {" · "}{formatFileSize(video.fileSize)}
+        </Text>
+
+        <TouchableOpacity
+          className="flex-row items-center justify-center gap-2 py-3 rounded-xl mt-1"
+          style={{ backgroundColor: colors.primary }}
+          onPress={handleWatch}
+        >
+          <Icon name="play" size={14} color="white" />
+          <Text className="text-white text-[13px] font-inter-semibold">Watch Replay</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+function ReplayCard({ activity }: { activity: Activity }) {
+  const colors = useColors();
+  const { getVideoForActivity } = useVideos();
   const gradient = (TYPE_GRADIENT[activity.type] ?? ["#6D9E51", "#088395"]) as [string, string];
   const label = TYPE_LABEL[activity.type] ?? "Activity";
   const tod = getTimeOfDay(activity.startTime);
   const miniPath = buildMiniPath(activity.coordinates, MINI_W, MINI_H);
+  const hasVideo = !!getVideoForActivity(activity.id);
 
-  const handlePlay = () => {
+  const handleReplay = () => {
     router.push(`/video-replay/${activity.id}`);
+  };
+
+  const handleGenerate = () => {
+    router.push(`/generate-video/${activity.id}`);
   };
 
   return (
@@ -94,7 +222,7 @@ function VideoCard({ activity }: { activity: Activity }) {
       className="flex-1 rounded-2xl border overflow-hidden"
       style={{ backgroundColor: colors.card, borderColor: colors.border, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 3 }}
       activeOpacity={0.85}
-      onPress={handlePlay}
+      onPress={handleReplay}
     >
       <LinearGradient colors={gradient} style={{ width: "100%", height: THUMB_HEIGHT }}>
         <View className="absolute top-2 left-2 w-[26px] h-[26px] rounded-lg bg-black/[0.28] items-center justify-center">
@@ -159,14 +287,26 @@ function VideoCard({ activity }: { activity: Activity }) {
           </View>
         </View>
 
-        <TouchableOpacity
-          className="flex-row items-center justify-center gap-1.5 py-[7px] rounded-[10px] mt-1.5"
-          style={{ backgroundColor: colors.primary }}
-          onPress={handlePlay}
-        >
-          <Icon name="play" size={11} color="white" />
-          <Text className="text-white text-xs font-inter-semibold">Watch Replay</Text>
-        </TouchableOpacity>
+        <View className="flex-row gap-2 mt-1.5">
+          <TouchableOpacity
+            className="flex-1 flex-row items-center justify-center gap-1 py-[7px] rounded-[10px]"
+            style={{ backgroundColor: colors.primary }}
+            onPress={handleReplay}
+          >
+            <Icon name="play" size={11} color="white" />
+            <Text className="text-white text-[10px] font-inter-semibold">Replay</Text>
+          </TouchableOpacity>
+          {!hasVideo && (
+            <TouchableOpacity
+              className="flex-1 flex-row items-center justify-center gap-1 py-[7px] rounded-[10px]"
+              style={{ backgroundColor: colors.accent }}
+              onPress={handleGenerate}
+            >
+              <Icon name="film" size={11} color="white" />
+              <Text className="text-white text-[10px] font-inter-semibold">3D Video</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -176,14 +316,26 @@ export default function VideosScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { activities } = useActivities();
+  const { videos } = useVideos();
   const isWeb = Platform.OS === "web";
   const topPadding = isWeb ? 67 : insets.top;
 
   const videoActivities = activities.filter((a) => a.coordinates.length >= 2);
 
+  const generatedVideos = videos
+    .map((v) => ({
+      video: v,
+      activity: activities.find((a) => a.id === v.activityId),
+    }))
+    .filter((item): item is { video: GeneratedVideo; activity: Activity } => !!item.activity);
+
+  const activitiesWithoutVideo = videoActivities.filter(
+    (a) => !videos.some((v) => v.activityId === a.id)
+  );
+
   const pairs: Activity[][] = [];
-  for (let i = 0; i < videoActivities.length; i += 2) {
-    pairs.push(videoActivities.slice(i, i + 2));
+  for (let i = 0; i < activitiesWithoutVideo.length; i += 2) {
+    pairs.push(activitiesWithoutVideo.slice(i, i + 2));
   }
 
   return (
@@ -194,13 +346,54 @@ export default function VideosScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View style={{ paddingTop: topPadding, paddingHorizontal: 20, paddingBottom: 16 }}>
-        <Text className="text-[28px] font-inter-bold" style={{ color: colors.foreground }}>Journey Replays</Text>
+        <Text className="text-[28px] font-inter-bold" style={{ color: colors.foreground }}>Journey Videos</Text>
         <Text className="text-[13px] font-inter-regular mt-0.5" style={{ color: colors.mutedForeground }}>
-          {videoActivities.length} {videoActivities.length === 1 ? "replay" : "replays"} available
+          {generatedVideos.length > 0
+            ? `${generatedVideos.length} video${generatedVideos.length !== 1 ? "s" : ""} generated · ${activitiesWithoutVideo.length} more available`
+            : `${videoActivities.length} ${videoActivities.length === 1 ? "activity" : "activities"} available`}
         </Text>
       </View>
 
-      {videoActivities.length === 0 ? (
+      {generatedVideos.length > 0 && (
+        <View className="mb-6">
+          <View className="flex-row items-center gap-2 px-5 mb-3">
+            <Icon name="film" size={16} color={colors.primary} />
+            <Text className="text-[15px] font-inter-bold" style={{ color: colors.foreground }}>
+              Generated 3D Videos
+            </Text>
+          </View>
+          <View className="gap-4" style={{ paddingHorizontal: H_PAD }}>
+            {generatedVideos.map(({ video, activity }) => (
+              <GeneratedVideoCard key={video.id} video={video} activity={activity} />
+            ))}
+          </View>
+        </View>
+      )}
+
+      {activitiesWithoutVideo.length > 0 && (
+        <View>
+          {generatedVideos.length > 0 && (
+            <View className="flex-row items-center gap-2 px-5 mb-3">
+              <Icon name="play" size={16} color={colors.accent} />
+              <Text className="text-[15px] font-inter-bold" style={{ color: colors.foreground }}>
+                Available Replays
+              </Text>
+            </View>
+          )}
+          <View className="gap-3" style={{ paddingHorizontal: H_PAD }}>
+            {pairs.map((pair, pi) => (
+              <View key={pi} className="flex-row gap-3">
+                {pair.map((a) => (
+                  <ReplayCard key={a.id} activity={a} />
+                ))}
+                {pair.length === 1 && <View className="flex-1" />}
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {videoActivities.length === 0 && (
         <View className="items-center px-10 py-[60px] gap-3">
           <View
             className="w-[72px] h-[72px] rounded-[20px] items-center justify-center mb-1"
@@ -208,21 +401,10 @@ export default function VideosScreen() {
           >
             <Icon name="videocam-outline" size={36} color={colors.primary} />
           </View>
-          <Text className="text-lg font-inter-bold" style={{ color: colors.foreground }}>No replays yet</Text>
+          <Text className="text-lg font-inter-bold" style={{ color: colors.foreground }}>No videos yet</Text>
           <Text className="text-sm font-inter-regular text-center leading-5" style={{ color: colors.mutedForeground }}>
-            Record an activity with GPS tracking to watch your journey replayed on a real map
+            Record an activity with GPS tracking to generate 3D flyover videos of your journey
           </Text>
-        </View>
-      ) : (
-        <View className="gap-3" style={{ paddingHorizontal: H_PAD }}>
-          {pairs.map((pair, pi) => (
-            <View key={pi} className="flex-row gap-3">
-              {pair.map((a) => (
-                <VideoCard key={a.id} activity={a} />
-              ))}
-              {pair.length === 1 && <View className="flex-1" />}
-            </View>
-          ))}
         </View>
       )}
     </ScrollView>

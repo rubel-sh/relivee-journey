@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Icon } from "@/components/Icon";
 import { Activity, Coordinate, useActivities } from "@/context/ActivityContext";
+import { useVideos } from "@/context/VideoContext";
 import { useColors } from "@/hooks/useColors";
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -107,9 +108,12 @@ function PaceDisplay({ activity }: { activity: Activity }) {
 export default function ActivityDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { activities, deleteActivity } = useActivities();
+  const { getVideoForActivity, isGenerating } = useVideos();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const [deleting, setDeleting] = useState(false);
+  const existingVideo = id ? getVideoForActivity(id) : undefined;
+  const currentlyGenerating = isGenerating === id;
 
   const activity = activities.find((a) => a.id === id);
 
@@ -329,19 +333,57 @@ export default function ActivityDetailScreen() {
             </Text>
           </View>
 
-          {/* Watch Replay button */}
           {activity.coordinates.length >= 2 && (
-            <TouchableOpacity
-              className="flex-row items-center justify-center gap-2 rounded-2xl py-4 mb-3"
-              style={{ backgroundColor: colors.primary }}
-              onPress={() => router.push(`/video-replay/${activity.id}`)}
-              activeOpacity={0.8}
-            >
-              <Icon name="play" size={18} color="white" />
-              <Text className="text-[15px] font-inter-semibold text-white">
-                Watch Journey Replay
-              </Text>
-            </TouchableOpacity>
+            <View className="gap-3 mb-3">
+              <TouchableOpacity
+                className="flex-row items-center justify-center gap-2 rounded-2xl py-4"
+                style={{ backgroundColor: colors.primary }}
+                onPress={() => router.push(`/video-replay/${activity.id}`)}
+                activeOpacity={0.8}
+              >
+                <Icon name="play" size={18} color="white" />
+                <Text className="text-[15px] font-inter-semibold text-white">
+                  Watch Journey Replay
+                </Text>
+              </TouchableOpacity>
+
+              {existingVideo ? (
+                <TouchableOpacity
+                  className="flex-row items-center justify-center gap-2 rounded-2xl py-4"
+                  style={{ backgroundColor: colors.accent }}
+                  onPress={() => router.push("/(tabs)/videos")}
+                  activeOpacity={0.8}
+                >
+                  <Icon name="videocam-outline" size={18} color="white" />
+                  <Text className="text-[15px] font-inter-semibold text-white">
+                    View 3D Video
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  className="flex-row items-center justify-center gap-2 rounded-2xl py-4"
+                  style={{
+                    backgroundColor: currentlyGenerating ? `${colors.accent}40` : colors.accent,
+                  }}
+                  onPress={() => {
+                    if (!currentlyGenerating) {
+                      router.push(`/generate-video/${activity.id}`);
+                    }
+                  }}
+                  activeOpacity={0.8}
+                  disabled={currentlyGenerating}
+                >
+                  <Icon
+                    name={currentlyGenerating ? "hourglass" : "videocam-outline"}
+                    size={18}
+                    color="white"
+                  />
+                  <Text className="text-[15px] font-inter-semibold text-white">
+                    {currentlyGenerating ? "Generating 3D Video..." : "Generate 3D Video"}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           )}
 
           {/* Delete button */}

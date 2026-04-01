@@ -10,6 +10,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ActivityProvider } from "@/context/ActivityContext";
+import { VideoProvider } from "@/context/VideoContext";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -29,6 +30,10 @@ function RootLayoutNav() {
       />
       <Stack.Screen
         name="video-replay/[id]"
+        options={{ headerShown: false, presentation: "fullScreenModal" }}
+      />
+      <Stack.Screen
+        name="generate-video/[id]"
         options={{ headerShown: false, presentation: "fullScreenModal" }}
       />
     </Stack>
@@ -71,7 +76,9 @@ export default function RootLayout() {
           <GestureHandlerRootView style={{ flex: 1 }}>
             <KeyboardProvider>
               <ActivityProvider>
-                <RootLayoutNav />
+                <VideoProvider>
+                  <RootLayoutNav />
+                </VideoProvider>
               </ActivityProvider>
             </KeyboardProvider>
           </GestureHandlerRootView>
