@@ -3,10 +3,13 @@ import * as Location from "expo-location";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  Animated,
+  Easing,
   Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import MapView, { Polyline, Circle, PROVIDER_DEFAULT } from "react-native-maps";
@@ -16,10 +19,7 @@ import { Icon } from "@/components/Icon";
 import { Activity, Coordinate, useActivities } from "@/context/ActivityContext";
 import { useColors } from "@/hooks/useColors";
 
-function haversine(
-  lat1: number, lon1: number,
-  lat2: number, lon2: number
-): number {
+function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371000;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
@@ -47,6 +47,11 @@ const INITIAL_REGION = {
   longitudeDelta: 0.02,
 };
 
+const NUM_ITEMS = 4;
+const STAGGER_MS = 55;
+const OPEN_DURATION = 280;
+const CLOSE_DURATION = 180;
+
 export default function RecordingScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -69,6 +74,111 @@ export default function RecordingScreen() {
   const lastAltRef = useRef<number | null>(null);
   const startTimeRef = useRef(Date.now());
   const pausedRef = useRef(false);
+
+  const triggerRotate = useRef(new Animated.Value(0)).current;
+  const triggerScale = useRef(new Animated.Value(1)).current;
+  const itemAnims = useRef(
+    Array.from({ length: NUM_ITEMS }, () => ({
+      opacity: new Animated.Value(0),
+      translateX: new Animated.Value(40),
+      scale: new Animated.Value(0.8),
+    }))
+  ).current;
+
+  const animateMenu = (open: boolean) => {
+    const duration = open ? OPEN_DURATION : CLOSE_DURATION;
+    const easing = open ? Easing.out(Easing.back(1.4)) : Easing.in(Easing.quad);
+
+    Animated.timing(triggerRotate, {
+      toValue: open ? 1 : 0,
+      duration: 220,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }).start();
+
+    Animated.sequence([
+      Animated.timing(triggerScale, {
+        toValue: 0.88,
+        duration: 80,
+        useNativeDriver: true,
+      }),
+      Animated.spring(triggerScale, {
+        toValue: 1,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    if (open) {
+      Animated.stagger(
+        STAGGER_MS,
+        itemAnims.map((anim) =>
+          Animated.parallel([
+            Animated.timing(anim.opacity, {
+              toValue: 1,
+              duration,
+              easing: Easing.out(Easing.quad),
+              useNativeDriver: true,
+            }),
+            Animated.timing(anim.translateX, {
+              toValue: 0,
+              duration,
+              easing: Easing.out(Easing.back(1.3)),
+              useNativeDriver: true,
+            }),
+            Animated.timing(anim.scale, {
+              toValue: 1,
+              duration,
+              easing: Easing.out(Easing.back(1.3)),
+              useNativeDriver: true,
+            }),
+          ])
+        )
+      ).start();
+    } else {
+      Animated.stagger(
+        STAGGER_MS,
+        [...itemAnims].reverse().map((anim) =>
+          Animated.parallel([
+            Animated.timing(anim.opacity, {
+              toValue: 0,
+              duration,
+              easing: Easing.in(Easing.quad),
+              useNativeDriver: true,
+            }),
+            Animated.timing(anim.translateX, {
+              toValue: 40,
+              duration,
+              easing: Easing.in(Easing.quad),
+              useNativeDriver: true,
+            }),
+            Animated.timing(anim.scale, {
+              toValue: 0.8,
+              duration,
+              easing: Easing.in(Easing.quad),
+              useNativeDriver: true,
+            }),
+          ])
+        )
+      ).start(() => {
+        if (!open) setMenuOpen(false);
+      });
+    }
+  };
+
+  const handleMenuToggle = () => {
+    if (!menuOpen) {
+      setMenuOpen(true);
+      animateMenu(true);
+    } else {
+      animateMenu(false);
+    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const triggerRotateDeg = triggerRotate.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "135deg"],
+  });
 
   useEffect(() => {
     requestPermission();
@@ -133,20 +243,15 @@ export default function RecordingScreen() {
   };
 
   const handleNewPosition = (
-    lat: number,
-    lon: number,
-    alt: number | undefined,
-    speedKmh: number
+    lat: number, lon: number,
+    alt: number | undefined, speedKmh: number
   ) => {
     if (pausedRef.current) return;
-
     const newCoord: Coordinate = { latitude: lat, longitude: lon, altitude: alt };
-
     setCoords((prev) => {
       if (prev.length > 0) {
         const last = prev[prev.length - 1];
-        const d = haversine(last.latitude, last.longitude, lat, lon);
-        setDistance((pd) => pd + d);
+        setDistance((pd) => pd + haversine(last.latitude, last.longitude, lat, lon));
       } else {
         mapRef.current?.animateToRegion(
           { latitude: lat, longitude: lon, latitudeDelta: 0.01, longitudeDelta: 0.01 },
@@ -155,11 +260,9 @@ export default function RecordingScreen() {
       }
       return [...prev, newCoord];
     });
-
     const spd = Math.max(0, speedKmh);
     setCurrentSpeed(spd);
     setMaxSpeed((prev) => Math.max(prev, spd));
-
     if (alt !== undefined && lastAltRef.current !== null) {
       const diff = alt - lastAltRef.current;
       if (diff > 0) setElevGain((prev) => prev + diff);
@@ -183,7 +286,6 @@ export default function RecordingScreen() {
   const handleStop = () => {
     stopAll();
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
     const activity: Activity = {
       id: Date.now().toString() + Math.random().toString(36).slice(2, 7),
       type: "run",
@@ -196,7 +298,6 @@ export default function RecordingScreen() {
       elevationGain: Math.round(elevGain),
       coordinates: coords.length > 0 ? coords : [INITIAL_REGION],
     };
-
     addActivity(activity);
     router.back();
   };
@@ -236,27 +337,25 @@ export default function RecordingScreen() {
     {
       icon: paused ? "play" : "pause",
       label: paused ? "Resume" : "Pause",
-      bg: colors.primary,
+      accent: colors.primary,
       onPress: handlePause,
     },
     {
       icon: "square",
       label: "Stop",
-      bg: colors.destructive,
+      accent: colors.destructive,
       onPress: handleStop,
     },
     {
       icon: "flag-outline",
-      label: "Lap",
-      bg: colors.card,
-      iconColor: colors.accent,
+      label: "Mark Lap",
+      accent: colors.accent,
       onPress: () => Haptics.selectionAsync(),
     },
     {
       icon: "location-outline",
-      label: "Pin",
-      bg: colors.card,
-      iconColor: colors.trace,
+      label: "Drop Pin",
+      accent: colors.trace,
       onPress: () => Haptics.selectionAsync(),
     },
   ];
@@ -302,12 +401,8 @@ export default function RecordingScreen() {
         )}
       </MapView>
 
-      <View
-        style={[
-          styles.topBar,
-          { paddingTop: topPad, backgroundColor: "rgba(255,255,255,0.88)" },
-        ]}
-      >
+      {/* Top bar */}
+      <View style={[styles.topBar, { paddingTop: topPad, backgroundColor: "rgba(255,255,255,0.88)" }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Icon name="chevron-down" size={24} color="#262626" />
         </TouchableOpacity>
@@ -321,6 +416,7 @@ export default function RecordingScreen() {
         </View>
       </View>
 
+      {/* Stats card */}
       <View style={[styles.statsCard, { bottom: botPad + 80, backgroundColor: "rgba(255,255,255,0.93)" }]}>
         <Text style={styles.timerText}>
           {formatDuration(duration)}
@@ -355,48 +451,70 @@ export default function RecordingScreen() {
         </View>
       </View>
 
+      {/* Radial action menu */}
+      {menuOpen && (
+        <TouchableWithoutFeedback onPress={handleMenuToggle}>
+          <View style={StyleSheet.absoluteFill} />
+        </TouchableWithoutFeedback>
+      )}
+
       <View style={[styles.menuContainer, { bottom: botPad + 80 }]}>
         {menuOpen && (
           <View style={styles.menuItems}>
-            {menuItems.map((item) => (
-              <View key={item.label} style={styles.menuRow}>
-                <View style={[styles.menuLabel, { backgroundColor: "rgba(255,255,255,0.92)" }]}>
-                  <Text style={[styles.menuLabelText, { color: colors.foreground }]}>
+            {menuItems.map((item, i) => (
+              <Animated.View
+                key={item.label}
+                style={[
+                  styles.menuRow,
+                  {
+                    opacity: itemAnims[i].opacity,
+                    transform: [
+                      { translateX: itemAnims[i].translateX },
+                      { scale: itemAnims[i].scale },
+                    ],
+                  },
+                ]}
+              >
+                <TouchableOpacity
+                  style={[styles.menuPill, { backgroundColor: "rgba(255,255,255,0.96)" }]}
+                  onPress={() => {
+                    animateMenu(false);
+                    setTimeout(item.onPress, 80);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <View style={[styles.menuIconWrap, { backgroundColor: `${item.accent}18` }]}>
+                    <Icon name={item.icon} size={16} color={item.accent} />
+                  </View>
+                  <Text style={[styles.menuPillText, { color: colors.foreground }]}>
                     {item.label}
                   </Text>
-                </View>
-                <TouchableOpacity
-                  style={[
-                    styles.menuBtn,
-                    {
-                      backgroundColor: item.bg,
-                      shadowColor: item.bg === colors.destructive ? "#FF4444" : item.bg,
-                    },
-                  ]}
-                  onPress={item.onPress}
-                >
-                  <Icon
-                    name={item.icon}
-                    size={18}
-                    color={item.iconColor ?? "white"}
-                  />
+                  <View style={[styles.menuAccentBar, { backgroundColor: item.accent }]} />
                 </TouchableOpacity>
-              </View>
+              </Animated.View>
             ))}
           </View>
         )}
-        <TouchableOpacity
-          style={[styles.menuTrigger, { backgroundColor: "rgba(255,255,255,0.95)" }]}
-          onPress={() => setMenuOpen(!menuOpen)}
-        >
-          <Icon
-            name={menuOpen ? "close" : "ellipsis-vertical"}
-            size={20}
-            color={colors.foreground}
-          />
-        </TouchableOpacity>
+
+        {/* Trigger button */}
+        <Animated.View style={{ transform: [{ scale: triggerScale }] }}>
+          <TouchableOpacity
+            style={[styles.menuTrigger, { backgroundColor: menuOpen ? colors.foreground : "rgba(255,255,255,0.95)" }]}
+            onPress={handleMenuToggle}
+            activeOpacity={0.85}
+          >
+            <Animated.View style={{ transform: [{ rotate: triggerRotateDeg }] }}>
+              <Icon
+                name="ellipsis-vertical"
+                size={20}
+                color={menuOpen ? "white" : colors.foreground}
+              />
+            </Animated.View>
+          </TouchableOpacity>
+        </Animated.View>
       </View>
 
+      {/* Bottom nav */}
       <View
         style={[
           styles.bottomNav,
@@ -429,11 +547,7 @@ export default function RecordingScreen() {
               },
             ]}
           >
-            <Icon
-              name={paused ? "play" : "pause"}
-              size={22}
-              color="white"
-            />
+            <Icon name={paused ? "play" : "pause"} size={22} color="white" />
           </View>
         </TouchableOpacity>
 
@@ -455,9 +569,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   topBar: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
+    top: 0, left: 0, right: 0,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -466,21 +578,9 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   backBtn: { padding: 4 },
-  recIndicator: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  recDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  recText: {
-    fontSize: 13,
-    fontFamily: "Inter_700Bold",
-    color: "#FF4444",
-  },
+  recIndicator: { flexDirection: "row", alignItems: "center", gap: 6 },
+  recDot: { width: 8, height: 8, borderRadius: 4 },
+  recText: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#FF4444" },
   gpsBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -490,11 +590,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 10,
   },
-  gpsText: {
-    fontSize: 11,
-    fontFamily: "Inter_600SemiBold",
-    color: "#088395",
-  },
+  gpsText: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#088395" },
   statsCard: {
     position: "absolute",
     left: 12,
@@ -521,54 +617,68 @@ const styles = StyleSheet.create({
   statUnit: { fontSize: 11, color: "#999", fontFamily: "Inter_400Regular" },
   statsDivider: { flexDirection: "row", gap: 12, borderTopWidth: 1, paddingTop: 8 },
   subStatText: { fontSize: 11, fontFamily: "Inter_500Medium", color: "#666" },
+
   menuContainer: {
     position: "absolute",
     right: 12,
-    alignItems: "center",
+    alignItems: "flex-end",
+    gap: 10,
+    zIndex: 20,
+  },
+  menuItems: {
     gap: 8,
-    zIndex: 10,
+    alignItems: "flex-end",
   },
-  menuItems: { gap: 8 },
-  menuRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  menuLabel: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
+  menuRow: {
+    alignItems: "flex-end",
+  },
+  menuPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 10,
+    paddingLeft: 10,
+    paddingRight: 14,
+    borderRadius: 24,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.13,
+    shadowRadius: 12,
+    elevation: 6,
+    overflow: "hidden",
   },
-  menuLabelText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-  menuBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  menuIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
+  },
+  menuPillText: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    flex: 1,
+  },
+  menuAccentBar: {
+    width: 3,
+    height: 20,
+    borderRadius: 2,
   },
   menuTrigger: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 6,
   },
   bottomNav: {
     position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
+    bottom: 0, left: 0, right: 0,
     flexDirection: "row",
     alignItems: "center",
     borderTopWidth: 1,
@@ -623,10 +733,6 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     marginTop: 8,
   },
-  permBtnText: {
-    color: "white",
-    fontSize: 16,
-    fontFamily: "Inter_600SemiBold",
-  },
+  permBtnText: { color: "white", fontSize: 16, fontFamily: "Inter_600SemiBold" },
   cancelText: { fontSize: 15, fontFamily: "Inter_500Medium", marginTop: 4 },
 });
