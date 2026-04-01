@@ -13,10 +13,12 @@ import Svg, { Circle, Path, Defs, LinearGradient as SvgGradient, Stop } from "re
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Icon } from "@/components/Icon";
+import MapHero from "@/components/MapHero";
 import VideoOptionsModal, { VideoOptions } from "@/components/VideoOptionsModal";
 import { Activity, Coordinate, useActivities } from "@/context/ActivityContext";
 import { useVideos } from "@/context/VideoContext";
 import { useColors } from "@/hooks/useColors";
+import { useStartEndLocations } from "@/hooks/useLocationName";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 const ROUTE_W = SCREEN_W;
@@ -149,6 +151,13 @@ export default function ActivityDetailScreen() {
   const distKm = (activity.distance / 1000).toFixed(2);
   const calories = Math.round((activity.distance / 1000) * CALORIE_FACTOR[activity.type]);
   const activityName = ActivityNameForType(activity.type, activity.startTime);
+  const startCoord = activity.coordinates[0];
+  const endCoord = activity.coordinates[activity.coordinates.length - 1];
+  const { startName, endName } = useStartEndLocations(
+    startCoord?.latitude, startCoord?.longitude,
+    endCoord?.latitude, endCoord?.longitude
+  );
+  const hasMap = activity.coordinates.length >= 2;
 
   const handleDelete = () => {
     Alert.alert(
@@ -172,87 +181,92 @@ export default function ActivityDetailScreen() {
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <ScrollView bounces showsVerticalScrollIndicator={false}>
-        {/* Hero header */}
-        <LinearGradient
-          colors={[cfg.gradient[0] + "dd", cfg.gradient[1]]}
-          style={{ paddingTop: insets.top + 12, paddingBottom: 0, minHeight: ROUTE_H + insets.top + 60 }}
-        >
-          {/* Nav row */}
-          <View className="flex-row items-center justify-between px-4 mb-4">
-            <TouchableOpacity
-              className="w-9 h-9 rounded-full bg-white/20 items-center justify-center"
-              onPress={() => router.back()}
-            >
-              <Icon name="arrow-back" size={20} color="white" />
-            </TouchableOpacity>
+        {/* Hero header with map */}
+        <View>
+          {hasMap ? (
+            <View style={{ height: ROUTE_H + insets.top + 60 }}>
+              <MapHero
+                coords={activity.coordinates}
+                startLabel={startName || "Start"}
+                endLabel={endName || "End"}
+                accentColor={cfg.color}
+                height={ROUTE_H + insets.top + 60}
+              />
+              <View style={{ position: "absolute", top: 0, left: 0, right: 0, paddingTop: insets.top + 12 }} pointerEvents="box-none">
+                <View className="flex-row items-center justify-between px-4 mb-4" pointerEvents="box-none">
+                  <TouchableOpacity
+                    className="w-9 h-9 rounded-full items-center justify-center"
+                    style={{ backgroundColor: "rgba(255,255,255,0.9)" }}
+                    onPress={() => router.back()}
+                  >
+                    <Icon name="arrow-back" size={20} color="#333" />
+                  </TouchableOpacity>
 
-            <View className="flex-row items-center gap-1.5 bg-white/20 px-3 py-1.5 rounded-full">
-              <Icon name={cfg.icon} size={14} color="white" />
-              <Text className="text-white text-[13px] font-inter-semibold">{cfg.label}</Text>
+                  <View className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.9)" }}>
+                    <Icon name={cfg.icon} size={14} color={cfg.color} />
+                    <Text className="text-[13px] font-inter-semibold" style={{ color: cfg.color }}>{cfg.label}</Text>
+                  </View>
+
+                  <TouchableOpacity
+                    className="w-9 h-9 rounded-full items-center justify-center"
+                    style={{ backgroundColor: "rgba(255,255,255,0.9)" }}
+                    onPress={() => {}}
+                  >
+                    <Icon name="share-outline" size={18} color="#333" />
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
-
-            <TouchableOpacity
-              className="w-9 h-9 rounded-full bg-white/20 items-center justify-center"
-              onPress={() => {}}
+          ) : (
+            <LinearGradient
+              colors={[cfg.gradient[0] + "dd", cfg.gradient[1]]}
+              style={{ paddingTop: insets.top + 12, paddingBottom: 20, minHeight: 140 }}
             >
-              <Icon name="share-outline" size={18} color="white" />
-            </TouchableOpacity>
-          </View>
+              <View className="flex-row items-center justify-between px-4 mb-4">
+                <TouchableOpacity
+                  className="w-9 h-9 rounded-full bg-white/20 items-center justify-center"
+                  onPress={() => router.back()}
+                >
+                  <Icon name="arrow-back" size={20} color="white" />
+                </TouchableOpacity>
+                <View className="flex-row items-center gap-1.5 bg-white/20 px-3 py-1.5 rounded-full">
+                  <Icon name={cfg.icon} size={14} color="white" />
+                  <Text className="text-white text-[13px] font-inter-semibold">{cfg.label}</Text>
+                </View>
+                <TouchableOpacity
+                  className="w-9 h-9 rounded-full bg-white/20 items-center justify-center"
+                  onPress={() => {}}
+                >
+                  <Icon name="share-outline" size={18} color="white" />
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
+          )}
+        </View>
 
-          {/* Title */}
-          <View className="px-5 mb-2">
-            <Text className="text-white text-2xl font-inter-bold">{activityName}</Text>
+        {/* Title bar below map */}
+        <View className="px-5 pt-4 pb-2" style={{ backgroundColor: colors.background }}>
+          <Text className="text-2xl font-inter-bold" style={{ color: colors.foreground }}>{activityName}</Text>
+          <View className="flex-row items-center gap-1.5 mt-1">
+            <Icon name="calendar-outline" size={13} color={colors.mutedForeground} />
+            <Text className="text-[13px] font-inter-regular" style={{ color: colors.mutedForeground }}>
+              {formatDate(activity.startTime)} · {formatTime(activity.startTime)}
+            </Text>
+          </View>
+          {(startName || endName) && (
             <View className="flex-row items-center gap-1.5 mt-1">
-              <Icon name="calendar-outline" size={13} color="rgba(255,255,255,0.8)" />
-              <Text className="text-white/80 text-[13px] font-inter-regular">
-                {formatDate(activity.startTime)} · {formatTime(activity.startTime)}
+              <Icon name="location-outline" size={13} color={cfg.color} />
+              <Text className="text-[13px] font-inter-medium" style={{ color: colors.foreground }} numberOfLines={1}>
+                {startName && endName && startName !== endName
+                  ? `${startName} → ${endName}`
+                  : startName || endName || ""}
               </Text>
             </View>
-          </View>
-
-          {/* Route SVG */}
-          <View style={{ height: ROUTE_H }}>
-            <Svg width={ROUTE_W} height={ROUTE_H}>
-              <Defs>
-                <SvgGradient id="routeGrad" x1="0" y1="0" x2="1" y2="0">
-                  <Stop offset="0" stopColor="white" stopOpacity="0.5" />
-                  <Stop offset="1" stopColor="white" stopOpacity="1" />
-                </SvgGradient>
-              </Defs>
-              {route ? (
-                <>
-                  <Path
-                    d={route.path}
-                    fill="none"
-                    stroke="white"
-                    strokeOpacity={0.25}
-                    strokeWidth={8}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <Path
-                    d={route.path}
-                    fill="none"
-                    stroke="url(#routeGrad)"
-                    strokeWidth={3.5}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <Circle cx={route.startX} cy={route.startY} r={7} fill="white" opacity={0.9} />
-                  <Circle cx={route.startX} cy={route.startY} r={4} fill={cfg.color} />
-                  <Circle cx={route.endX} cy={route.endY} r={9} fill="white" opacity={0.5} />
-                  <Circle cx={route.endX} cy={route.endY} r={6} fill="white" />
-                  <Circle cx={route.endX} cy={route.endY} r={3} fill={cfg.color} />
-                </>
-              ) : (
-                <Circle cx={ROUTE_W / 2} cy={ROUTE_H / 2} r={6} fill="white" opacity={0.6} />
-              )}
-            </Svg>
-          </View>
-        </LinearGradient>
+          )}
+        </View>
 
         {/* Stats section */}
-        <View className="px-4 -mt-5">
+        <View className="px-4 mt-2">
           {/* Big 3 */}
           <View
             className="flex-row rounded-2xl overflow-hidden mb-4"
