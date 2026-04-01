@@ -1,4 +1,5 @@
 import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   FlatList,
@@ -163,13 +164,23 @@ function HistoryCard({ activity }: { activity: Activity }) {
               </View>
             </View>
           </View>
-          <TouchableOpacity
-            className="flex-row items-center gap-[5px] px-3.5 py-2 rounded-full"
-            style={{ backgroundColor: colors.primary }}
-          >
-            <Icon name="play" size={14} color="white" />
-            <Text className="text-white text-xs font-inter-semibold">Video</Text>
-          </TouchableOpacity>
+          <View className="flex-row items-center gap-2">
+            <TouchableOpacity
+              className="flex-row items-center gap-[5px] px-3 py-2 rounded-full border"
+              style={{ borderColor: colors.border }}
+              onPress={() => router.push(`/activity/${activity.id}` as any)}
+            >
+              <Icon name="chevron-forward" size={13} color={colors.foreground} />
+              <Text className="text-xs font-inter-semibold" style={{ color: colors.foreground }}>Details</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="flex-row items-center gap-[5px] px-3.5 py-2 rounded-full"
+              style={{ backgroundColor: colors.primary }}
+            >
+              <Icon name="play" size={14} color="white" />
+              <Text className="text-white text-xs font-inter-semibold">Video</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </TouchableOpacity>

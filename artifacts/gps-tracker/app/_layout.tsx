@@ -23,6 +23,10 @@ function RootLayoutNav() {
         name="recording"
         options={{ headerShown: false, presentation: "fullScreenModal" }}
       />
+      <Stack.Screen
+        name="activity/[id]"
+        options={{ headerShown: false }}
+      />
     </Stack>
   );
 }

@@ -1,4 +1,5 @@
 import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
 import React from "react";
 import {
   Dimensions,
@@ -125,9 +126,11 @@ function ActivityCard({ activity, featured }: { activity: Activity; featured?: b
   });
 
   return (
-    <View
+    <TouchableOpacity
       className="rounded-2xl overflow-hidden"
       style={{ backgroundColor: colors.card, shadowColor: gradient[2], width: cardW, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.14, shadowRadius: 12, elevation: 5 }}
+      onPress={() => router.push(`/activity/${activity.id}` as any)}
+      activeOpacity={0.93}
     >
       {/* Thumbnail */}
       <View className="w-full overflow-hidden justify-between" style={{ height: thumbH }}>
@@ -257,7 +260,7 @@ function ActivityCard({ activity, featured }: { activity: Activity; featured?: b
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 

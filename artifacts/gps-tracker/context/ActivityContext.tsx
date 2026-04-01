@@ -29,6 +29,7 @@ export interface Activity {
 interface ActivityContextType {
   activities: Activity[];
   addActivity: (activity: Activity) => Promise<void>;
+  deleteActivity: (id: string) => Promise<void>;
   clearActivities: () => Promise<void>;
 }
 
@@ -53,6 +54,8 @@ const SAMPLE_ACTIVITIES: Activity[] = [
       { latitude: 48.2092, longitude: 16.3765 },
       { latitude: 48.212, longitude: 16.3823 },
       { latitude: 48.2098, longitude: 16.3854 },
+      { latitude: 48.207, longitude: 16.388 },
+      { latitude: 48.204, longitude: 16.385 },
     ],
   },
   {
@@ -70,6 +73,9 @@ const SAMPLE_ACTIVITIES: Activity[] = [
       { latitude: 48.208, longitude: 16.365 },
       { latitude: 48.22, longitude: 16.39 },
       { latitude: 48.235, longitude: 16.41 },
+      { latitude: 48.245, longitude: 16.43 },
+      { latitude: 48.238, longitude: 16.455 },
+      { latitude: 48.225, longitude: 16.445 },
     ],
   },
   {
@@ -84,14 +90,17 @@ const SAMPLE_ACTIVITIES: Activity[] = [
     elevationGain: 480,
     coordinates: [
       { latitude: 48.15, longitude: 16.28 },
-      { latitude: 48.168, longitude: 16.3 },
-      { latitude: 48.185, longitude: 16.32 },
+      { latitude: 48.162, longitude: 16.295 },
+      { latitude: 48.175, longitude: 16.31 },
+      { latitude: 48.185, longitude: 16.325 },
+      { latitude: 48.196, longitude: 16.342 },
       { latitude: 48.21, longitude: 16.36 },
+      { latitude: 48.205, longitude: 16.375 },
     ],
   },
   {
     id: "sample-4",
-    type: "run",
+    type: "walk",
     startTime: now - 5 * 86400000,
     endTime: now - 5 * 86400000 + 1560000,
     duration: 1560,
@@ -101,8 +110,10 @@ const SAMPLE_ACTIVITIES: Activity[] = [
     elevationGain: 35,
     coordinates: [
       { latitude: 48.21, longitude: 16.37 },
-      { latitude: 48.205, longitude: 16.36 },
+      { latitude: 48.207, longitude: 16.363 },
+      { latitude: 48.204, longitude: 16.356 },
       { latitude: 48.2, longitude: 16.35 },
+      { latitude: 48.197, longitude: 16.345 },
     ],
   },
 ];
@@ -110,6 +121,7 @@ const SAMPLE_ACTIVITIES: Activity[] = [
 const ActivityContext = createContext<ActivityContextType>({
   activities: [],
   addActivity: async () => {},
+  deleteActivity: async () => {},
   clearActivities: async () => {},
 });
 
@@ -148,6 +160,19 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
     [activities]
   );
 
+  const deleteActivity = useCallback(
+    async (id: string) => {
+      const updated = activities.filter((a) => a.id !== id);
+      setActivities(updated);
+      try {
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.warn("Failed to delete activity:", e);
+      }
+    },
+    [activities]
+  );
+
   const clearActivities = useCallback(async () => {
     setActivities([]);
     try {
@@ -158,7 +183,7 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <ActivityContext.Provider value={{ activities, addActivity, clearActivities }}>
+    <ActivityContext.Provider value={{ activities, addActivity, deleteActivity, clearActivities }}>
       {children}
     </ActivityContext.Provider>
   );

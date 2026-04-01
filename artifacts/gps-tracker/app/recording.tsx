@@ -1,5 +1,6 @@
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -52,10 +53,26 @@ const STAGGER_MS = 55;
 const OPEN_DURATION = 280;
 const CLOSE_DURATION = 180;
 
+type ActivityType = Activity["type"];
+type RecordingPhase = "setup" | "active";
+
+const TYPE_CONFIG: Record<
+  ActivityType,
+  { label: string; icon: string; gradient: [string, string]; color: string }
+> = {
+  run:   { label: "Run",   icon: "walk",       gradient: ["#A8C97F", "#6D9E51"], color: "#6D9E51" },
+  cycle: { label: "Cycle", icon: "bicycle",    gradient: ["#5BB8C8", "#088395"], color: "#088395" },
+  hike:  { label: "Hike",  icon: "trail-sign", gradient: ["#C8A86B", "#8B6914"], color: "#8B6914" },
+  walk:  { label: "Walk",  icon: "footsteps",  gradient: ["#9BB5B5", "#5B7070"], color: "#5B7070" },
+};
+
 export default function RecordingScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { addActivity } = useActivities();
+
+  const [phase, setPhase] = useState<RecordingPhase>("setup");
+  const [activityType, setActivityType] = useState<ActivityType>("run");
 
   const [coords, setCoords] = useState<Coordinate[]>([]);
   const [duration, setDuration] = useState(0);
@@ -65,7 +82,7 @@ export default function RecordingScreen() {
   const [elevGain, setElevGain] = useState(0);
   const [paused, setPaused] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [permGranted, setPermGranted] = useState<boolean | null>(null);
+  const [followMap, setFollowMap] = useState(true);
 
   const mapRef = useRef<MapView>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -87,7 +104,6 @@ export default function RecordingScreen() {
 
   const animateMenu = (open: boolean) => {
     const dur = open ? OPEN_DURATION : CLOSE_DURATION;
-    const easing = open ? Easing.out(Easing.back(1.4)) : Easing.in(Easing.quad);
 
     Animated.timing(triggerRotate, {
       toValue: open ? 1 : 0,
@@ -97,15 +113,8 @@ export default function RecordingScreen() {
     }).start();
 
     Animated.sequence([
-      Animated.timing(triggerScale, {
-        toValue: 0.88,
-        duration: 80,
-        useNativeDriver: true,
-      }),
-      Animated.spring(triggerScale, {
-        toValue: 1,
-        useNativeDriver: true,
-      }),
+      Animated.timing(triggerScale, { toValue: 0.88, duration: 80, useNativeDriver: true }),
+      Animated.spring(triggerScale, { toValue: 1, useNativeDriver: true }),
     ]).start();
 
     if (open) {
@@ -113,24 +122,9 @@ export default function RecordingScreen() {
         STAGGER_MS,
         itemAnims.map((anim) =>
           Animated.parallel([
-            Animated.timing(anim.opacity, {
-              toValue: 1,
-              duration: dur,
-              easing: Easing.out(Easing.quad),
-              useNativeDriver: true,
-            }),
-            Animated.timing(anim.translateX, {
-              toValue: 0,
-              duration: dur,
-              easing: Easing.out(Easing.back(1.3)),
-              useNativeDriver: true,
-            }),
-            Animated.timing(anim.scale, {
-              toValue: 1,
-              duration: dur,
-              easing: Easing.out(Easing.back(1.3)),
-              useNativeDriver: true,
-            }),
+            Animated.timing(anim.opacity, { toValue: 1, duration: dur, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+            Animated.timing(anim.translateX, { toValue: 0, duration: dur, easing: Easing.out(Easing.back(1.3)), useNativeDriver: true }),
+            Animated.timing(anim.scale, { toValue: 1, duration: dur, easing: Easing.out(Easing.back(1.3)), useNativeDriver: true }),
           ])
         )
       ).start();
@@ -139,39 +133,18 @@ export default function RecordingScreen() {
         STAGGER_MS,
         [...itemAnims].reverse().map((anim) =>
           Animated.parallel([
-            Animated.timing(anim.opacity, {
-              toValue: 0,
-              duration: dur,
-              easing: Easing.in(Easing.quad),
-              useNativeDriver: true,
-            }),
-            Animated.timing(anim.translateX, {
-              toValue: 40,
-              duration: dur,
-              easing: Easing.in(Easing.quad),
-              useNativeDriver: true,
-            }),
-            Animated.timing(anim.scale, {
-              toValue: 0.8,
-              duration: dur,
-              easing: Easing.in(Easing.quad),
-              useNativeDriver: true,
-            }),
+            Animated.timing(anim.opacity, { toValue: 0, duration: dur, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+            Animated.timing(anim.translateX, { toValue: 40, duration: dur, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+            Animated.timing(anim.scale, { toValue: 0.8, duration: dur, easing: Easing.in(Easing.quad), useNativeDriver: true }),
           ])
         )
-      ).start(() => {
-        if (!open) setMenuOpen(false);
-      });
+      ).start(() => { if (!open) setMenuOpen(false); });
     }
   };
 
   const handleMenuToggle = () => {
-    if (!menuOpen) {
-      setMenuOpen(true);
-      animateMenu(true);
-    } else {
-      animateMenu(false);
-    }
+    if (!menuOpen) { setMenuOpen(true); animateMenu(true); }
+    else { animateMenu(false); }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
@@ -180,25 +153,7 @@ export default function RecordingScreen() {
     outputRange: ["0deg", "135deg"],
   });
 
-  useEffect(() => {
-    requestPermission();
-    return () => stopAll();
-  }, []);
-
-  const requestPermission = async () => {
-    if (Platform.OS === "web") {
-      setPermGranted(true);
-      startTracking();
-      return;
-    }
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status === "granted") {
-      setPermGranted(true);
-      startTracking();
-    } else {
-      setPermGranted(false);
-    }
-  };
+  useEffect(() => { return () => stopAll(); }, []);
 
   const startTracking = () => {
     startTimeRef.current = Date.now();
@@ -209,72 +164,73 @@ export default function RecordingScreen() {
     if (Platform.OS === "web") {
       if (navigator.geolocation) {
         webWatchRef.current = navigator.geolocation.watchPosition(
-          (pos) => {
-            handleNewPosition(
-              pos.coords.latitude,
-              pos.coords.longitude,
-              pos.coords.altitude ?? undefined,
-              (pos.coords.speed ?? 0) * 3.6
-            );
-          },
+          (pos) => handleNewPosition(
+            pos.coords.latitude, pos.coords.longitude,
+            pos.coords.altitude ?? undefined,
+            (pos.coords.speed ?? 0) * 3.6
+          ),
           undefined,
           { enableHighAccuracy: true }
         );
       }
     } else {
       Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.BestForNavigation,
-          timeInterval: 2000,
-          distanceInterval: 3,
-        },
-        (loc) => {
-          handleNewPosition(
-            loc.coords.latitude,
-            loc.coords.longitude,
-            loc.coords.altitude ?? undefined,
-            (loc.coords.speed ?? 0) * 3.6
-          );
-        }
-      ).then((sub) => {
-        locSubRef.current = sub;
-      });
+        { accuracy: Location.Accuracy.BestForNavigation, timeInterval: 2000, distanceInterval: 3 },
+        (loc) => handleNewPosition(
+          loc.coords.latitude, loc.coords.longitude,
+          loc.coords.altitude ?? undefined,
+          (loc.coords.speed ?? 0) * 3.6
+        )
+      ).then((sub) => { locSubRef.current = sub; });
     }
   };
 
-  const handleNewPosition = (
-    lat: number, lon: number,
-    alt: number | undefined, speedKmh: number
-  ) => {
+  const handleNewPosition = (lat: number, lon: number, alt: number | undefined, speedKmh: number) => {
     if (pausedRef.current) return;
     const newCoord: Coordinate = { latitude: lat, longitude: lon, altitude: alt };
+
     setCoords((prev) => {
       if (prev.length > 0) {
         const last = prev[prev.length - 1];
         setDistance((pd) => pd + haversine(last.latitude, last.longitude, lat, lon));
-      } else {
-        mapRef.current?.animateToRegion(
-          { latitude: lat, longitude: lon, latitudeDelta: 0.01, longitudeDelta: 0.01 },
-          800
-        );
       }
       return [...prev, newCoord];
     });
+
     const spd = Math.max(0, speedKmh);
     setCurrentSpeed(spd);
     setMaxSpeed((prev) => Math.max(prev, spd));
+
     if (alt !== undefined && lastAltRef.current !== null) {
       const diff = alt - lastAltRef.current;
       if (diff > 0) setElevGain((prev) => prev + diff);
     }
     if (alt !== undefined) lastAltRef.current = alt;
+
+    if (followMap) {
+      mapRef.current?.animateToRegion(
+        { latitude: lat, longitude: lon, latitudeDelta: 0.008, longitudeDelta: 0.008 },
+        600
+      );
+    }
   };
 
   const stopAll = () => {
     if (timerRef.current) clearInterval(timerRef.current);
     if (locSubRef.current) locSubRef.current.remove();
-    if (webWatchRef.current !== null)
-      navigator.geolocation?.clearWatch(webWatchRef.current);
+    if (webWatchRef.current !== null) navigator.geolocation?.clearWatch(webWatchRef.current);
+  };
+
+  const handleStart = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (Platform.OS !== "web") {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        return;
+      }
+    }
+    setPhase("active");
+    startTracking();
   };
 
   const handlePause = () => {
@@ -288,7 +244,7 @@ export default function RecordingScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const activity: Activity = {
       id: Date.now().toString() + Math.random().toString(36).slice(2, 7),
-      type: "run",
+      type: activityType,
       startTime: startTimeRef.current,
       endTime: Date.now(),
       duration,
@@ -305,60 +261,131 @@ export default function RecordingScreen() {
   const isWeb = Platform.OS === "web";
   const topPad = isWeb ? 67 : insets.top;
   const botPad = isWeb ? 34 : insets.bottom;
+  const cfg = TYPE_CONFIG[activityType];
 
-  if (permGranted === false) {
+  // ─── SETUP PHASE ─────────────────────────────────────────────────────────────
+  if (phase === "setup") {
     return (
-      <View className="flex-1 items-center justify-center p-10 gap-4" style={{ backgroundColor: colors.background }}>
-        <Icon name="location-outline" size={56} color={colors.mutedForeground} />
-        <Text className="text-[22px] font-inter-bold" style={{ color: colors.foreground }}>
-          Location Required
-        </Text>
-        <Text className="text-[15px] font-inter-regular text-center" style={{ color: colors.mutedForeground }}>
-          Journey needs location access to track your GPS route.
-        </Text>
-        <TouchableOpacity
-          className="px-8 py-3.5 rounded-full"
-          style={{ backgroundColor: colors.primary }}
-          onPress={requestPermission}
+      <View className="flex-1" style={{ backgroundColor: colors.background }}>
+        {/* Header */}
+        <View
+          className="flex-row items-center px-4 pb-4"
+          style={{ paddingTop: topPad + 8, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.card }}
         >
-          <Text className="text-white text-base font-inter-semibold">Grant Permission</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text className="text-[15px] font-inter-regular" style={{ color: colors.mutedForeground }}>Cancel</Text>
-        </TouchableOpacity>
+          <TouchableOpacity className="p-1 mr-3" onPress={() => router.back()}>
+            <Icon name="chevron-down" size={24} color={colors.foreground} />
+          </TouchableOpacity>
+          <View>
+            <Text className="text-[22px] font-inter-bold" style={{ color: colors.foreground }}>New Activity</Text>
+            <Text className="text-[13px] font-inter-regular" style={{ color: colors.mutedForeground }}>Choose your activity type</Text>
+          </View>
+        </View>
+
+        {/* Type picker grid */}
+        <View className="flex-1 p-5 gap-3">
+          <View className="flex-row gap-3">
+            {(["run", "cycle"] as ActivityType[]).map((type) => {
+              const c = TYPE_CONFIG[type];
+              const selected = activityType === type;
+              return (
+                <TouchableOpacity
+                  key={type}
+                  className="flex-1 rounded-2xl overflow-hidden"
+                  style={{ borderWidth: 2.5, borderColor: selected ? c.color : "transparent" }}
+                  onPress={() => { setActivityType(type); Haptics.selectionAsync(); }}
+                  activeOpacity={0.85}
+                >
+                  <LinearGradient
+                    colors={c.gradient}
+                    className="items-center justify-center py-8 gap-3"
+                  >
+                    {selected && (
+                      <View className="absolute top-3 right-3 w-6 h-6 rounded-full bg-white/30 items-center justify-center">
+                        <Icon name="checkmark" size={14} color="white" />
+                      </View>
+                    )}
+                    <Icon name={c.icon} size={40} color="white" />
+                    <Text className="text-white text-lg font-inter-bold">{c.label}</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <View className="flex-row gap-3">
+            {(["hike", "walk"] as ActivityType[]).map((type) => {
+              const c = TYPE_CONFIG[type];
+              const selected = activityType === type;
+              return (
+                <TouchableOpacity
+                  key={type}
+                  className="flex-1 rounded-2xl overflow-hidden"
+                  style={{ borderWidth: 2.5, borderColor: selected ? c.color : "transparent" }}
+                  onPress={() => { setActivityType(type); Haptics.selectionAsync(); }}
+                  activeOpacity={0.85}
+                >
+                  <LinearGradient
+                    colors={c.gradient}
+                    className="items-center justify-center py-8 gap-3"
+                  >
+                    {selected && (
+                      <View className="absolute top-3 right-3 w-6 h-6 rounded-full bg-white/30 items-center justify-center">
+                        <Icon name="checkmark" size={14} color="white" />
+                      </View>
+                    )}
+                    <Icon name={c.icon} size={40} color="white" />
+                    <Text className="text-white text-lg font-inter-bold">{c.label}</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* GPS info strip */}
+          <View
+            className="flex-row items-center gap-2.5 px-4 py-3 rounded-xl"
+            style={{ backgroundColor: `${colors.accent}12` }}
+          >
+            <Icon name="navigate" size={16} color={colors.accent} />
+            <Text className="flex-1 text-[13px] font-inter-regular" style={{ color: colors.accent }}>
+              {Platform.OS === "web"
+                ? "GPS will use browser location"
+                : "GPS will request precise location access"}
+            </Text>
+          </View>
+        </View>
+
+        {/* Start button */}
+        <View className="px-5" style={{ paddingBottom: botPad + 16 }}>
+          <TouchableOpacity
+            className="rounded-2xl overflow-hidden"
+            onPress={handleStart}
+            activeOpacity={0.85}
+          >
+            <LinearGradient
+              colors={cfg.gradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              className="flex-row items-center justify-center gap-3 py-4"
+            >
+              <Icon name="navigate" size={22} color="white" />
+              <Text className="text-white text-lg font-inter-bold">Start {cfg.label}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
 
+  // ─── ACTIVE PHASE ─────────────────────────────────────────────────────────────
   const mapCoords = coords.map((c) => ({ latitude: c.latitude, longitude: c.longitude }));
   const lastCoord = coords.length > 0 ? coords[coords.length - 1] : null;
   const firstCoord = coords.length > 0 ? coords[0] : null;
 
   const menuItems = [
-    {
-      icon: paused ? "play" : "pause",
-      label: paused ? "Resume" : "Pause",
-      accent: colors.primary,
-      onPress: handlePause,
-    },
-    {
-      icon: "square",
-      label: "Stop",
-      accent: colors.destructive,
-      onPress: handleStop,
-    },
-    {
-      icon: "flag-outline",
-      label: "Mark Lap",
-      accent: colors.accent,
-      onPress: () => Haptics.selectionAsync(),
-    },
-    {
-      icon: "location-outline",
-      label: "Drop Pin",
-      accent: colors.trace,
-      onPress: () => Haptics.selectionAsync(),
-    },
+    { icon: paused ? "play" : "pause", label: paused ? "Resume" : "Pause", accent: colors.primary, onPress: handlePause },
+    { icon: "square", label: "Stop", accent: colors.destructive, onPress: handleStop },
+    { icon: "flag-outline", label: "Mark Lap", accent: colors.accent, onPress: () => Haptics.selectionAsync() },
+    { icon: "location-outline", label: "Drop Pin", accent: colors.trace, onPress: () => Haptics.selectionAsync() },
   ];
 
   return (
@@ -372,11 +399,12 @@ export default function RecordingScreen() {
         showsMyLocationButton={false}
         zoomControlEnabled={false}
         toolbarEnabled={false}
+        onPanDrag={() => setFollowMap(false)}
       >
         {mapCoords.length > 1 && (
           <Polyline
             coordinates={mapCoords}
-            strokeColor="#982598"
+            strokeColor={cfg.color}
             strokeWidth={4}
             lineCap="round"
             lineJoin="round"
@@ -386,7 +414,7 @@ export default function RecordingScreen() {
           <Circle
             center={{ latitude: firstCoord.latitude, longitude: firstCoord.longitude }}
             radius={12}
-            fillColor={colors.primary}
+            fillColor={cfg.color}
             strokeColor="white"
             strokeWidth={2}
           />
@@ -395,7 +423,7 @@ export default function RecordingScreen() {
           <Circle
             center={{ latitude: lastCoord.latitude, longitude: lastCoord.longitude }}
             radius={20}
-            fillColor="rgba(152,37,152,0.18)"
+            fillColor={`${cfg.color}30`}
             strokeColor="transparent"
             strokeWidth={0}
           />
@@ -410,17 +438,45 @@ export default function RecordingScreen() {
         <TouchableOpacity onPress={() => router.back()} className="p-1">
           <Icon name="chevron-down" size={24} color="#262626" />
         </TouchableOpacity>
-        <View className="flex-row items-center gap-1.5">
-          <View className="w-2 h-2 rounded-full" style={{ backgroundColor: paused ? "#FFB800" : "#FF4444" }} />
-          <Text className="text-[13px] font-inter-bold text-[#FF4444]">
-            {paused ? "PAUSED" : "RECORDING"}
-          </Text>
+
+        <View className="flex-row items-center gap-2">
+          <LinearGradient colors={cfg.gradient} className="flex-row items-center gap-1.5 px-2.5 py-1 rounded-full">
+            <Icon name={cfg.icon} size={12} color="white" />
+            <Text className="text-white text-[12px] font-inter-semibold">{cfg.label}</Text>
+          </LinearGradient>
+          <View className="flex-row items-center gap-1.5">
+            <View className="w-2 h-2 rounded-full" style={{ backgroundColor: paused ? "#FFB800" : "#FF4444" }} />
+            <Text className="text-[13px] font-inter-bold" style={{ color: paused ? "#FFB800" : "#FF4444" }}>
+              {paused ? "PAUSED" : "RECORDING"}
+            </Text>
+          </View>
         </View>
+
         <View className="flex-row items-center gap-1 bg-[rgba(8,131,149,0.12)] px-2 py-1 rounded-[10px]">
           <Icon name="navigate" size={11} color="#088395" />
           <Text className="text-[11px] font-inter-semibold text-accent">GPS</Text>
         </View>
       </View>
+
+      {/* Re-center button (shows when map panned away) */}
+      {!followMap && (
+        <TouchableOpacity
+          className="absolute z-10 right-3 bg-white rounded-xl px-3 py-2 flex-row items-center gap-1.5"
+          style={{ top: topPad + 56, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 4 }}
+          onPress={() => {
+            setFollowMap(true);
+            if (lastCoord) {
+              mapRef.current?.animateToRegion(
+                { latitude: lastCoord.latitude, longitude: lastCoord.longitude, latitudeDelta: 0.008, longitudeDelta: 0.008 },
+                600
+              );
+            }
+          }}
+        >
+          <Icon name="navigate" size={14} color={cfg.color} />
+          <Text className="text-[12px] font-inter-semibold" style={{ color: cfg.color }}>Re-center</Text>
+        </TouchableOpacity>
+      )}
 
       {/* Stats card */}
       <View
@@ -441,7 +497,7 @@ export default function RecordingScreen() {
         </Text>
         <View className="flex-row gap-3 mb-2">
           <View className="flex-row items-center gap-[3px]">
-            <Icon name="map-outline" size={12} color={colors.primary} />
+            <Icon name="map-outline" size={12} color={cfg.color} />
             <Text className="text-sm font-inter-bold text-foreground">{(distance / 1000).toFixed(2)}</Text>
             <Text className="text-[11px] text-[#999] font-inter-regular">km</Text>
           </View>
@@ -458,7 +514,7 @@ export default function RecordingScreen() {
         </View>
         <View className="flex-row gap-3 border-t pt-2" style={{ borderTopColor: "#F0F0F0" }}>
           <View className="flex-row items-center gap-[3px]">
-            <Icon name="flash" size={11} color={colors.primary} />
+            <Icon name="flash" size={11} color={cfg.color} />
             <Text className="text-[11px] font-inter-medium text-[#666]">{maxSpeed.toFixed(1)} km/h max</Text>
           </View>
           <View className="flex-row items-center gap-[3px]">
@@ -476,80 +532,41 @@ export default function RecordingScreen() {
       )}
 
       {/* Radial action menu */}
-      <View
-        className="absolute right-3 items-end gap-2.5 z-20"
-        style={{ bottom: botPad + 80, elevation: 20 }}
-      >
+      <View className="absolute right-3 items-end gap-2.5 z-20" style={{ bottom: botPad + 80, elevation: 20 }}>
         {menuOpen && (
           <View className="gap-2 items-end">
             {menuItems.map((item, i) => (
               <Animated.View
                 key={item.label}
                 className="items-end"
-                style={{
-                  opacity: itemAnims[i].opacity,
-                  transform: [
-                    { translateX: itemAnims[i].translateX },
-                    { scale: itemAnims[i].scale },
-                  ],
-                }}
+                style={{ opacity: itemAnims[i].opacity, transform: [{ translateX: itemAnims[i].translateX }, { scale: itemAnims[i].scale }] }}
               >
                 <TouchableOpacity
                   className="flex-row items-center gap-2.5 py-2.5 pl-2.5 pr-3.5 rounded-3xl w-[152px]"
-                  style={{
-                    backgroundColor: "rgba(255,255,255,0.96)",
-                    shadowColor: "#000",
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.13,
-                    shadowRadius: 12,
-                    elevation: 6,
-                  }}
-                  onPress={() => {
-                    animateMenu(false);
-                    setTimeout(item.onPress, 80);
-                  }}
+                  style={{ backgroundColor: "rgba(255,255,255,0.96)", shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.13, shadowRadius: 12, elevation: 6 }}
+                  onPress={() => { animateMenu(false); setTimeout(item.onPress, 80); }}
                   activeOpacity={0.8}
                 >
-                  <View
-                    className="w-8 h-8 rounded-full items-center justify-center shrink-0"
-                    style={{ backgroundColor: `${item.accent}18` }}
-                  >
+                  <View className="w-8 h-8 rounded-full items-center justify-center shrink-0" style={{ backgroundColor: `${item.accent}18` }}>
                     <Icon name={item.icon} size={16} color={item.accent} />
                   </View>
-                  <Text className="text-[13px] font-inter-semibold shrink grow" style={{ color: colors.foreground }}>
-                    {item.label}
-                  </Text>
-                  <View
-                    className="w-[3px] h-5 rounded-sm shrink-0"
-                    style={{ backgroundColor: item.accent }}
-                  />
+                  <Text className="text-[13px] font-inter-semibold shrink grow" style={{ color: colors.foreground }}>{item.label}</Text>
+                  <View className="w-[3px] h-5 rounded-sm shrink-0" style={{ backgroundColor: item.accent }} />
                 </TouchableOpacity>
               </Animated.View>
             ))}
           </View>
         )}
 
-        {/* Trigger button */}
         <Animated.View style={{ transform: [{ scale: triggerScale }] }}>
           <TouchableOpacity
             className="w-[46px] h-[46px] rounded-[23px] items-center justify-center"
-            style={{
-              backgroundColor: menuOpen ? colors.foreground : "rgba(255,255,255,0.95)",
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 3 },
-              shadowOpacity: 0.18,
-              shadowRadius: 10,
-              elevation: 6,
-            }}
+            style={{ backgroundColor: menuOpen ? colors.foreground : "rgba(255,255,255,0.95)", shadowColor: "#000", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.18, shadowRadius: 10, elevation: 6 }}
             onPress={handleMenuToggle}
             activeOpacity={0.85}
           >
             <Animated.View style={{ transform: [{ rotate: triggerRotateDeg }] }}>
-              <Icon
-                name="ellipsis-vertical"
-                size={20}
-                color={menuOpen ? "white" : colors.foreground}
-              />
+              <Icon name="ellipsis-vertical" size={20} color={menuOpen ? "white" : colors.foreground} />
             </Animated.View>
           </TouchableOpacity>
         </Animated.View>
@@ -558,11 +575,7 @@ export default function RecordingScreen() {
       {/* Bottom nav */}
       <View
         className="absolute bottom-0 left-0 right-0 flex-row items-center border-t pt-2 z-10"
-        style={{
-          paddingBottom: botPad,
-          backgroundColor: colors.card,
-          borderTopColor: colors.border,
-        }}
+        style={{ paddingBottom: botPad, backgroundColor: colors.card, borderTopColor: colors.border }}
       >
         <TouchableOpacity className="flex-1 items-center justify-center pt-1 gap-[3px] min-h-[50px]" onPress={handleStop}>
           <View className="w-8 h-8 rounded-2xl bg-[#FFF0F0] items-center justify-center">
@@ -579,14 +592,7 @@ export default function RecordingScreen() {
         <TouchableOpacity className="flex-1 items-center justify-center pt-1 gap-[3px] min-h-[50px]" onPress={handlePause}>
           <View
             className="w-[52px] h-[52px] rounded-[26px] items-center justify-center"
-            style={{
-              backgroundColor: paused ? colors.accent : colors.primary,
-              shadowColor: colors.primary,
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.4,
-              shadowRadius: 8,
-              elevation: 6,
-            }}
+            style={{ backgroundColor: paused ? colors.accent : cfg.color, shadowColor: cfg.color, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 6 }}
           >
             <Icon name={paused ? "play" : "pause"} size={22} color="white" />
           </View>
