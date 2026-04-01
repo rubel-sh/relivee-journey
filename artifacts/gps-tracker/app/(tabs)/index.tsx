@@ -440,9 +440,9 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   cardDate: { fontSize: 12, fontFamily: "Inter_400Regular", marginBottom: 8 },
-  statsRow: { flexDirection: "row", gap: 12 },
+  statsRow: { flexDirection: "row", gap: 10, flexWrap: "wrap" },
   statItem: { flexDirection: "row", alignItems: "center", gap: 3 },
-  statText: { fontSize: 12, fontFamily: "Inter_500Medium" },
+  statText: { fontSize: 11, fontFamily: "Inter_500Medium" },
   emptyState: {
     alignItems: "center",
     gap: 12,

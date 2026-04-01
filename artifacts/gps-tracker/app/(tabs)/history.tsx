@@ -125,29 +125,37 @@ function HistoryCard({ activity }: { activity: Activity }) {
         <View style={[styles.expandedRow, { borderTopColor: colors.border }]}>
           <View style={styles.expandedStats}>
             <View style={styles.expandedStat}>
-              <Ionicons name="flash" size={14} color={colors.primary} />
-              <Text style={[styles.expandedVal, { color: colors.foreground }]}>
-                {activity.maxSpeed.toFixed(1)} km/h
-              </Text>
-              <Text style={[styles.expandedLabel, { color: colors.mutedForeground }]}>
-                max speed
-              </Text>
+              <View style={[styles.expandedStatIcon, { backgroundColor: `${colors.primary}15` }]}>
+                <Ionicons name="flash" size={14} color={colors.primary} />
+              </View>
+              <View>
+                <Text style={[styles.expandedVal, { color: colors.foreground }]}>
+                  {activity.maxSpeed.toFixed(1)} km/h
+                </Text>
+                <Text style={[styles.expandedLabel, { color: colors.mutedForeground }]}>
+                  max speed
+                </Text>
+              </View>
             </View>
             <View style={styles.expandedStat}>
-              <Ionicons name="trending-up" size={14} color={colors.accent} />
-              <Text style={[styles.expandedVal, { color: colors.foreground }]}>
-                +{activity.elevationGain}m
-              </Text>
-              <Text style={[styles.expandedLabel, { color: colors.mutedForeground }]}>
-                elevation
-              </Text>
+              <View style={[styles.expandedStatIcon, { backgroundColor: `${colors.accent}15` }]}>
+                <Ionicons name="trending-up" size={14} color={colors.accent} />
+              </View>
+              <View>
+                <Text style={[styles.expandedVal, { color: colors.foreground }]}>
+                  +{activity.elevationGain}m
+                </Text>
+                <Text style={[styles.expandedLabel, { color: colors.mutedForeground }]}>
+                  elevation
+                </Text>
+              </View>
             </View>
           </View>
           <TouchableOpacity
             style={[styles.playBtn, { backgroundColor: colors.primary }]}
           >
             <Ionicons name="play" size={14} color="white" />
-            <Text style={styles.playBtnText}>Play Video</Text>
+            <Text style={styles.playBtnText}>Video</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -324,9 +332,9 @@ const styles = StyleSheet.create({
   },
   videoBadgeText: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
   cardDate: { fontSize: 12, fontFamily: "Inter_400Regular", marginBottom: 6 },
-  statsRow: { flexDirection: "row", gap: 10 },
+  statsRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
   stat: { flexDirection: "row", alignItems: "center", gap: 3 },
-  statVal: { fontSize: 12, fontFamily: "Inter_500Medium" },
+  statVal: { fontSize: 11, fontFamily: "Inter_500Medium" },
   expandedRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -334,11 +342,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderTopWidth: 1,
+    flexWrap: "wrap",
+    gap: 8,
   },
-  expandedStats: { flexDirection: "row", gap: 20 },
-  expandedStat: { flexDirection: "row", alignItems: "center", gap: 4 },
+  expandedStats: { flexDirection: "row", gap: 16, flexShrink: 1 },
+  expandedStat: { flexDirection: "row", alignItems: "center", gap: 6 },
+  expandedStatIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  },
   expandedVal: { fontSize: 13, fontFamily: "Inter_700Bold" },
-  expandedLabel: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  expandedLabel: { fontSize: 10, fontFamily: "Inter_400Regular" },
   playBtn: {
     flexDirection: "row",
     alignItems: "center",
