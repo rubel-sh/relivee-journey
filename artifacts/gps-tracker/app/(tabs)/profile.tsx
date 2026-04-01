@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import {
@@ -11,6 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Icon } from "@/components/Icon";
 import { useActivities } from "@/context/ActivityContext";
 import { useColors } from "@/hooks/useColors";
 
@@ -26,11 +26,11 @@ export default function ProfileScreen() {
   const totalElev = activities.reduce((s, a) => s + a.elevationGain, 0);
 
   const settings = [
-    { icon: "notifications-outline" as const, label: "Notifications", value: "On" },
-    { icon: "map-outline" as const, label: "Map Style", value: "Voyager" },
-    { icon: "videocam-outline" as const, label: "Video Quality", value: "4K · 60fps" },
-    { icon: "cloud-upload-outline" as const, label: "Auto Backup", value: "On" },
-    { icon: "moon-outline" as const, label: "Dark Mode", value: "Auto" },
+    { icon: "notifications-outline", label: "Notifications", value: "On" },
+    { icon: "map-outline", label: "Map Style", value: "Voyager" },
+    { icon: "videocam-outline", label: "Video Quality", value: "4K · 60fps" },
+    { icon: "cloud-upload-outline", label: "Auto Backup", value: "On" },
+    { icon: "moon-outline", label: "Dark Mode", value: "Auto" },
   ];
 
   return (
@@ -82,7 +82,7 @@ export default function ProfileScreen() {
               ]}
             >
               <View style={[styles.settingsIcon, { backgroundColor: `${colors.primary}15` }]}>
-                <Ionicons name={s.icon} size={18} color={colors.primary} />
+                <Icon name={s.icon} size={18} color={colors.primary} />
               </View>
               <Text style={[styles.settingsLabel, { color: colors.foreground }]}>
                 {s.label}
@@ -91,7 +91,7 @@ export default function ProfileScreen() {
                 <Text style={[styles.settingsValue, { color: colors.mutedForeground }]}>
                   {s.value}
                 </Text>
-                <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
+                <Icon name="chevron-forward" size={16} color={colors.mutedForeground} />
               </View>
             </TouchableOpacity>
           ))}
@@ -101,12 +101,12 @@ export default function ProfileScreen() {
         <View style={[styles.settingsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <TouchableOpacity style={styles.settingsRow} onPress={clearActivities}>
             <View style={[styles.settingsIcon, { backgroundColor: "#FF444415" }]}>
-              <Ionicons name="trash-outline" size={18} color={colors.destructive} />
+              <Icon name="trash-outline" size={18} color={colors.destructive} />
             </View>
             <Text style={[styles.settingsLabel, { color: colors.destructive }]}>
               Clear All Activities
             </Text>
-            <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
+            <Icon name="chevron-forward" size={16} color={colors.mutedForeground} />
           </TouchableOpacity>
         </View>
       </View>

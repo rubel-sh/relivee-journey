@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
 import { router } from "expo-router";
@@ -13,6 +12,7 @@ import {
 import MapView, { Polyline, Circle, PROVIDER_DEFAULT } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Icon } from "@/components/Icon";
 import { Activity, Coordinate, useActivities } from "@/context/ActivityContext";
 import { useColors } from "@/hooks/useColors";
 
@@ -208,7 +208,7 @@ export default function RecordingScreen() {
   if (permGranted === false) {
     return (
       <View style={[styles.permContainer, { backgroundColor: colors.background }]}>
-        <Ionicons name="location-outline" size={56} color={colors.mutedForeground} />
+        <Icon name="location-outline" size={56} color={colors.mutedForeground} />
         <Text style={[styles.permTitle, { color: colors.foreground }]}>
           Location Required
         </Text>
@@ -234,26 +234,26 @@ export default function RecordingScreen() {
 
   const menuItems = [
     {
-      icon: paused ? ("play" as const) : ("pause" as const),
+      icon: paused ? "play" : "pause",
       label: paused ? "Resume" : "Pause",
       bg: colors.primary,
       onPress: handlePause,
     },
     {
-      icon: "square" as const,
+      icon: "square",
       label: "Stop",
       bg: colors.destructive,
       onPress: handleStop,
     },
     {
-      icon: "flag-outline" as const,
+      icon: "flag-outline",
       label: "Lap",
       bg: colors.card,
       iconColor: colors.accent,
       onPress: () => Haptics.selectionAsync(),
     },
     {
-      icon: "location-outline" as const,
+      icon: "location-outline",
       label: "Pin",
       bg: colors.card,
       iconColor: colors.trace,
@@ -302,7 +302,6 @@ export default function RecordingScreen() {
         )}
       </MapView>
 
-      {/* Top bar overlay */}
       <View
         style={[
           styles.topBar,
@@ -310,19 +309,18 @@ export default function RecordingScreen() {
         ]}
       >
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="chevron-down" size={24} color="#262626" />
+          <Icon name="chevron-down" size={24} color="#262626" />
         </TouchableOpacity>
         <View style={styles.recIndicator}>
           <View style={[styles.recDot, { backgroundColor: paused ? "#FFB800" : "#FF4444" }]} />
           <Text style={styles.recText}>{paused ? "PAUSED" : "RECORDING"}</Text>
         </View>
         <View style={styles.gpsBadge}>
-          <Ionicons name="navigate" size={11} color="#088395" />
+          <Icon name="navigate" size={11} color="#088395" />
           <Text style={styles.gpsText}>GPS</Text>
         </View>
       </View>
 
-      {/* Stats card — bottom left */}
       <View style={[styles.statsCard, { bottom: botPad + 80, backgroundColor: "rgba(255,255,255,0.93)" }]}>
         <Text style={styles.timerText}>
           {formatDuration(duration)}
@@ -330,34 +328,33 @@ export default function RecordingScreen() {
         </Text>
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <Ionicons name="map-outline" size={12} color={colors.primary} />
+            <Icon name="map-outline" size={12} color={colors.primary} />
             <Text style={styles.statVal}>{(distance / 1000).toFixed(2)}</Text>
             <Text style={styles.statUnit}>km</Text>
           </View>
           <View style={styles.statItem}>
-            <Ionicons name="flash-outline" size={12} color={colors.accent} />
+            <Icon name="flash-outline" size={12} color={colors.accent} />
             <Text style={styles.statVal}>{currentSpeed.toFixed(1)}</Text>
             <Text style={styles.statUnit}>km/h</Text>
           </View>
           <View style={styles.statItem}>
-            <Ionicons name="trending-up-outline" size={12} color={colors.trace} />
+            <Icon name="trending-up-outline" size={12} color={colors.trace} />
             <Text style={styles.statVal}>+{Math.round(elevGain)}</Text>
             <Text style={styles.statUnit}>m</Text>
           </View>
         </View>
         <View style={[styles.statsDivider, { borderTopColor: "#F0F0F0" }]}>
           <View style={styles.statItem}>
-            <Ionicons name="flash" size={11} color={colors.primary} />
+            <Icon name="flash" size={11} color={colors.primary} />
             <Text style={styles.subStatText}>{maxSpeed.toFixed(1)} km/h max</Text>
           </View>
           <View style={styles.statItem}>
-            <Ionicons name="videocam-outline" size={11} color={colors.trace} />
+            <Icon name="videocam-outline" size={11} color={colors.trace} />
             <Text style={styles.subStatText}>4K · 60fps</Text>
           </View>
         </View>
       </View>
 
-      {/* Dots menu — bottom right */}
       <View style={[styles.menuContainer, { bottom: botPad + 80 }]}>
         {menuOpen && (
           <View style={styles.menuItems}>
@@ -378,7 +375,7 @@ export default function RecordingScreen() {
                   ]}
                   onPress={item.onPress}
                 >
-                  <Ionicons
+                  <Icon
                     name={item.icon}
                     size={18}
                     color={item.iconColor ?? "white"}
@@ -392,7 +389,7 @@ export default function RecordingScreen() {
           style={[styles.menuTrigger, { backgroundColor: "rgba(255,255,255,0.95)" }]}
           onPress={() => setMenuOpen(!menuOpen)}
         >
-          <Ionicons
+          <Icon
             name={menuOpen ? "close" : "ellipsis-vertical"}
             size={20}
             color={colors.foreground}
@@ -400,7 +397,6 @@ export default function RecordingScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Bottom nav */}
       <View
         style={[
           styles.bottomNav,
@@ -413,13 +409,13 @@ export default function RecordingScreen() {
       >
         <TouchableOpacity style={styles.navTab} onPress={handleStop}>
           <View style={styles.stopIcon}>
-            <Ionicons name="square" size={16} color={colors.destructive} />
+            <Icon name="square" size={16} color={colors.destructive} />
           </View>
           <Text style={[styles.navLabel, { color: colors.destructive }]}>Stop</Text>
         </TouchableOpacity>
 
         <View style={styles.navTab}>
-          <Ionicons name="time-outline" size={22} color={colors.mutedForeground} />
+          <Icon name="time-outline" size={22} color={colors.mutedForeground} />
           <Text style={[styles.navLabel, { color: colors.mutedForeground }]}>History</Text>
         </View>
 
@@ -433,7 +429,7 @@ export default function RecordingScreen() {
               },
             ]}
           >
-            <Ionicons
+            <Icon
               name={paused ? "play" : "pause"}
               size={22}
               color="white"
@@ -442,12 +438,12 @@ export default function RecordingScreen() {
         </TouchableOpacity>
 
         <View style={styles.navTab}>
-          <Ionicons name="videocam-outline" size={22} color={colors.mutedForeground} />
+          <Icon name="videocam-outline" size={22} color={colors.mutedForeground} />
           <Text style={[styles.navLabel, { color: colors.mutedForeground }]}>Videos</Text>
         </View>
 
         <View style={styles.navTab}>
-          <Ionicons name="person-outline" size={22} color={colors.mutedForeground} />
+          <Icon name="person-outline" size={22} color={colors.mutedForeground} />
           <Text style={[styles.navLabel, { color: colors.mutedForeground }]}>Profile</Text>
         </View>
       </View>

@@ -24,6 +24,7 @@ context/
   ActivityContext.tsx      # Shared state: activities array, AsyncStorage persistence, seeded sample data
 
 components/
+  Icon.tsx                 # SVG icon wrapper mapping Ionicons names to lucide-react-native components
   CustomTabBar.tsx         # Inline 5-slot tab bar: Dashboard, History, FAB (record), Videos, Profile
 
 constants/
@@ -43,10 +44,17 @@ metro.config.js            # Resolves react-native-maps to web stub on platform=
 - **Recording screen**: launches as `fullScreenModal` with full-screen OSM map, floating stats card (bottom-left), vertical dots menu (bottom-right), custom bottom nav with Stop/Pause/History/Videos/Profile
 - **UUID pattern**: `Date.now().toString() + Math.random().toString(36).slice(2, 7)` (no uuid package)
 
+### Icons
+- **`lucide-react-native`** — SVG-based icons (replaced `@expo/vector-icons` Ionicons which had font-name case-sensitivity issues on Android Fabric/New Architecture)
+- `components/Icon.tsx` maps Ionicons-style names (e.g. `"play"`, `"map-outline"`) to Lucide SVG components
+- `@expo/vector-icons` has been removed from the project
+
 ### Dependencies (notable)
 - `expo ~54.0.27`
 - `react-native 0.81.5`
 - `react-native-maps 1.18.0` (pinned)
+- `lucide-react-native ^1.7.0` (SVG icons)
+- `react-native-svg 15.12.1` (required by lucide)
 - `expo-location ~19.0.8`
 - `expo-linear-gradient ~15.0.8`
 - `@react-native-async-storage/async-storage 2.2.0`

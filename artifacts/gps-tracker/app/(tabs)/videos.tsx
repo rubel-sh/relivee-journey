@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import {
@@ -11,6 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Icon } from "@/components/Icon";
 import { useActivities } from "@/context/ActivityContext";
 import { useColors } from "@/hooks/useColors";
 
@@ -60,11 +60,11 @@ export default function VideosScreen() {
               >
                 <View style={styles.playOverlay}>
                   <View style={styles.playCircle}>
-                    <Ionicons name="play" size={24} color="white" />
+                    <Icon name="play" size={24} color="white" />
                   </View>
                 </View>
                 <View style={styles.qualityBadge}>
-                  <Ionicons name="videocam" size={11} color="white" />
+                  <Icon name="videocam" size={11} color="white" />
                   <Text style={styles.qualityText}>4K · 60fps</Text>
                 </View>
                 <Text style={styles.durationBadge}>
@@ -84,7 +84,7 @@ export default function VideosScreen() {
                 </Text>
               </View>
               <TouchableOpacity style={[styles.shareBtn, { borderColor: colors.border }]}>
-                <Ionicons name="share-outline" size={18} color={colors.primary} />
+                <Icon name="share-outline" size={18} color={colors.primary} />
               </TouchableOpacity>
             </View>
           );

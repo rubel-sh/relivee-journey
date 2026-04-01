@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import {
@@ -11,6 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Icon } from "@/components/Icon";
 import { Activity, useActivities } from "@/context/ActivityContext";
 import { useColors } from "@/hooks/useColors";
 
@@ -63,7 +63,7 @@ const TYPE_GRADIENT: Record<
   walk: ["#9BB5B5", "#5B7070"],
 };
 
-const TYPE_ICON: Record<Activity["type"], React.ComponentProps<typeof Ionicons>["name"]> = {
+const TYPE_ICON: Record<Activity["type"], string> = {
   run: "walk",
   cycle: "bicycle",
   hike: "trail-sign",
@@ -82,10 +82,10 @@ function ActivityCard({ activity }: { activity: Activity }) {
         style={styles.cardHeader}
       >
         <View style={styles.cardHeaderContent}>
-          <Ionicons name={TYPE_ICON[activity.type]} size={18} color="rgba(255,255,255,0.85)" />
+          <Icon name={TYPE_ICON[activity.type]} size={18} color="rgba(255,255,255,0.85)" />
         </View>
         <View style={styles.videoTag}>
-          <Ionicons name="videocam" size={10} color="rgba(255,255,255,0.9)" />
+          <Icon name="videocam" size={10} color="rgba(255,255,255,0.9)" />
           <Text style={styles.videoTagText}>4K Video</Text>
         </View>
         <Text style={styles.distanceBadge}>
@@ -108,19 +108,19 @@ function ActivityCard({ activity }: { activity: Activity }) {
         </Text>
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <Ionicons name="timer-outline" size={13} color={colors.mutedForeground} />
+            <Icon name="timer-outline" size={13} color={colors.mutedForeground} />
             <Text style={[styles.statText, { color: colors.mutedForeground }]}>
               {formatDuration(activity.duration)}
             </Text>
           </View>
           <View style={styles.statItem}>
-            <Ionicons name="flash-outline" size={13} color={colors.mutedForeground} />
+            <Icon name="flash-outline" size={13} color={colors.mutedForeground} />
             <Text style={[styles.statText, { color: colors.mutedForeground }]}>
               {activity.maxSpeed.toFixed(1)} km/h max
             </Text>
           </View>
           <View style={styles.statItem}>
-            <Ionicons name="trending-up-outline" size={13} color={colors.mutedForeground} />
+            <Icon name="trending-up-outline" size={13} color={colors.mutedForeground} />
             <Text style={[styles.statText, { color: colors.mutedForeground }]}>
               {activity.elevationGain}m
             </Text>
@@ -171,7 +171,7 @@ export default function DashboardScreen() {
           <TouchableOpacity
             style={[styles.bellBtn, { backgroundColor: colors.primary }]}
           >
-            <Ionicons name="notifications-outline" size={20} color="white" />
+            <Icon name="notifications-outline" size={20} color="white" />
             <View style={styles.notifDot} />
           </TouchableOpacity>
         </View>
@@ -184,7 +184,7 @@ export default function DashboardScreen() {
             <View style={styles.weekTop}>
               <Text style={styles.weekLabel}>This Week</Text>
               <View style={styles.weekBadge}>
-                <Ionicons name="trending-up" size={12} color="#6D9E51" />
+                <Icon name="trending-up" size={12} color="#6D9E51" />
                 <Text style={styles.weekBadgeText}>+12% vs last week</Text>
               </View>
             </View>
@@ -243,7 +243,7 @@ export default function DashboardScreen() {
 
         {recent.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons
+            <Icon
               name="map-outline"
               size={48}
               color={colors.mutedForeground}

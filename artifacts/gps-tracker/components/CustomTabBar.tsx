@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
@@ -13,13 +12,12 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Icon } from "@/components/Icon";
 import { useColors } from "@/hooks/useColors";
-
-type IoniconName = React.ComponentProps<typeof Ionicons>["name"];
 
 const TAB_CONFIG: Record<
   string,
-  { outline: IoniconName; filled: IoniconName; label: string }
+  { outline: string; filled: string; label: string }
 > = {
   index: { outline: "bar-chart-outline", filled: "bar-chart", label: "Dashboard" },
   history: { outline: "time-outline", filled: "time", label: "History" },
@@ -80,7 +78,7 @@ export function CustomTabBar({
             activeOpacity={0.7}
             testID={`tab-${route.name}`}
           >
-            <Ionicons
+            <Icon
               name={isFocused ? cfg?.filled : cfg?.outline}
               size={22}
               color={isFocused ? colors.primary : colors.mutedForeground}
@@ -114,7 +112,7 @@ export function CustomTabBar({
           end={{ x: 1, y: 1 }}
           style={styles.fab}
         >
-          <Ionicons name="play" size={22} color="white" />
+          <Icon name="play" size={22} color="white" />
         </LinearGradient>
       </TouchableOpacity>
 
@@ -130,7 +128,7 @@ export function CustomTabBar({
             activeOpacity={0.7}
             testID={`tab-${route.name}`}
           >
-            <Ionicons
+            <Icon
               name={isFocused ? cfg?.filled : cfg?.outline}
               size={22}
               color={isFocused ? colors.primary : colors.mutedForeground}

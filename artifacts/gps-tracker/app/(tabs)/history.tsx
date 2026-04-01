@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
@@ -11,6 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Icon } from "@/components/Icon";
 import { Activity, useActivities } from "@/context/ActivityContext";
 import { useColors } from "@/hooks/useColors";
 
@@ -31,7 +31,7 @@ const TYPE_GRADIENT: Record<Activity["type"], [string, string]> = {
   walk: ["#9BB5B5", "#5B7070"],
 };
 
-const TYPE_ICON: Record<Activity["type"], React.ComponentProps<typeof Ionicons>["name"]> = {
+const TYPE_ICON: Record<Activity["type"], string> = {
   run: "walk",
   cycle: "bicycle",
   hike: "trail-sign",
@@ -74,7 +74,7 @@ function HistoryCard({ activity }: { activity: Activity }) {
     >
       <View style={styles.cardRow}>
         <LinearGradient colors={gradient} style={styles.miniMap}>
-          <Ionicons name={TYPE_ICON[activity.type]} size={20} color="white" />
+          <Icon name={TYPE_ICON[activity.type]} size={20} color="white" />
         </LinearGradient>
 
         <View style={styles.cardInfo}>
@@ -84,7 +84,7 @@ function HistoryCard({ activity }: { activity: Activity }) {
             </Text>
             {activity.elevationGain > 100 && (
               <View style={[styles.videoBadge, { backgroundColor: `${colors.trace}18` }]}>
-                <Ionicons name="videocam" size={11} color={colors.trace} />
+                <Icon name="videocam" size={11} color={colors.trace} />
                 <Text style={[styles.videoBadgeText, { color: colors.trace }]}>Video</Text>
               </View>
             )}
@@ -94,19 +94,19 @@ function HistoryCard({ activity }: { activity: Activity }) {
           </Text>
           <View style={styles.statsRow}>
             <View style={styles.stat}>
-              <Ionicons name="map-outline" size={12} color={colors.mutedForeground} />
+              <Icon name="map-outline" size={12} color={colors.mutedForeground} />
               <Text style={[styles.statVal, { color: colors.foreground }]}>
                 {(activity.distance / 1000).toFixed(1)} km
               </Text>
             </View>
             <View style={styles.stat}>
-              <Ionicons name="timer-outline" size={12} color={colors.mutedForeground} />
+              <Icon name="timer-outline" size={12} color={colors.mutedForeground} />
               <Text style={[styles.statVal, { color: colors.foreground }]}>
                 {formatDuration(activity.duration)}
               </Text>
             </View>
             <View style={styles.stat}>
-              <Ionicons name="flash-outline" size={12} color={colors.mutedForeground} />
+              <Icon name="flash-outline" size={12} color={colors.mutedForeground} />
               <Text style={[styles.statVal, { color: colors.foreground }]}>
                 {activity.avgSpeed.toFixed(1)} km/h
               </Text>
@@ -114,7 +114,7 @@ function HistoryCard({ activity }: { activity: Activity }) {
           </View>
         </View>
 
-        <Ionicons
+        <Icon
           name={expanded ? "chevron-up" : "chevron-down"}
           size={18}
           color={colors.mutedForeground}
@@ -126,7 +126,7 @@ function HistoryCard({ activity }: { activity: Activity }) {
           <View style={styles.expandedStats}>
             <View style={styles.expandedStat}>
               <View style={[styles.expandedStatIcon, { backgroundColor: `${colors.primary}15` }]}>
-                <Ionicons name="flash" size={14} color={colors.primary} />
+                <Icon name="flash" size={14} color={colors.primary} />
               </View>
               <View>
                 <Text style={[styles.expandedVal, { color: colors.foreground }]}>
@@ -139,7 +139,7 @@ function HistoryCard({ activity }: { activity: Activity }) {
             </View>
             <View style={styles.expandedStat}>
               <View style={[styles.expandedStatIcon, { backgroundColor: `${colors.accent}15` }]}>
-                <Ionicons name="trending-up" size={14} color={colors.accent} />
+                <Icon name="trending-up" size={14} color={colors.accent} />
               </View>
               <View>
                 <Text style={[styles.expandedVal, { color: colors.foreground }]}>
@@ -154,7 +154,7 @@ function HistoryCard({ activity }: { activity: Activity }) {
           <TouchableOpacity
             style={[styles.playBtn, { backgroundColor: colors.primary }]}
           >
-            <Ionicons name="play" size={14} color="white" />
+            <Icon name="play" size={14} color="white" />
             <Text style={styles.playBtnText}>Video</Text>
           </TouchableOpacity>
         </View>
@@ -252,7 +252,7 @@ export default function HistoryScreen() {
         scrollEnabled={filtered.length > 0}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="map-outline" size={40} color={colors.mutedForeground} />
+            <Icon name="map-outline" size={40} color={colors.mutedForeground} />
             <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
               No activities match this filter
             </Text>
