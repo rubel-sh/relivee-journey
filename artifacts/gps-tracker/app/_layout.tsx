@@ -32,15 +32,12 @@ export default function RootLayout() {
   useEffect(() => {
     async function prepare() {
       try {
-        console.log("[Journey] Starting font load...");
         await Font.loadAsync({
           Inter_400Regular: require("../assets/fonts/Inter_400Regular.ttf"),
           Inter_500Medium: require("../assets/fonts/Inter_500Medium.ttf"),
           Inter_600SemiBold: require("../assets/fonts/Inter_600SemiBold.ttf"),
           Inter_700Bold: require("../assets/fonts/Inter_700Bold.ttf"),
         });
-        console.log("[Journey] Fonts loaded successfully");
-        console.log("[Journey] Loaded font names:", Font.isLoaded("Inter_400Regular"), Font.isLoaded("Inter_700Bold"));
       } catch (e) {
         console.warn("[Journey] Font load error:", e);
       } finally {
