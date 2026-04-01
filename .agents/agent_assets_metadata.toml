@@ -11,3 +11,9 @@ id = "IN0QSVonbcA25JQ97lMkK"
 uri = "file://journey-gps-tracker.tar.gz"
 type = "unspecified"
 title = "Journey GPS Tracker — Source Code"
+
+[[outputs]]
+id = "NR78QJCDLjinLB3i15wlI"
+uri = "file://README.md"
+type = "text"
+title = "Journey — Developer README"
