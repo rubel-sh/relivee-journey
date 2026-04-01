@@ -59,6 +59,7 @@
   "dependencies": {
     "expo-file-system": "~19.0.21",
     "expo-media-library": "^55.0.10",
+    "expo-sharing": "^55.0.14",
     "expo-video": "^3.0.16",
     "nativewind": "^4.2.3",
     "react-native-css-interop": "^0.2.3",

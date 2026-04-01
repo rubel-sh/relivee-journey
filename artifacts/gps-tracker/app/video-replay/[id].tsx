@@ -1,5 +1,5 @@
 import * as Haptics from "expo-haptics";
-import * as MediaLibrary from "expo-media-library";
+import * as Sharing from "expo-sharing";
 import { router, useLocalSearchParams } from "expo-router";
 import { useVideoPlayer, VideoView } from "expo-video";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -84,27 +84,22 @@ export default function VideoReplayScreen() {
     revealControls();
 
     try {
-      const { status } = await MediaLibrary.requestPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("Permission Required", "Please allow access to save videos to your device.");
+      const available = await Sharing.isAvailableAsync();
+      if (!available) {
+        Alert.alert("Not Available", "Sharing is not available on this device.");
         setExporting(false);
         return;
       }
 
-      const asset = await MediaLibrary.createAssetAsync(video.filePath);
-
-      let album = await MediaLibrary.getAlbumAsync("ReliveeJourney");
-      if (album) {
-        await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
-      } else {
-        album = await MediaLibrary.createAlbumAsync("ReliveeJourney", asset, false);
-      }
+      await Sharing.shareAsync(video.filePath, {
+        mimeType: "video/mp4",
+        dialogTitle: "Save Journey Video",
+      });
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Exported!", "Video saved to your ReliveeJourney folder.");
     } catch (err: any) {
       console.warn("Export failed:", err);
-      Alert.alert("Export Failed", err?.message || "Could not save the video.");
+      Alert.alert("Export Failed", err?.message || "Could not export the video.");
     } finally {
       setExporting(false);
     }
