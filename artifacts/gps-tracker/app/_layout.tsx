@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import AnimatedSplash from "@/components/AnimatedSplash";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ActivityProvider } from "@/context/ActivityContext";
 import { VideoProvider } from "@/context/VideoContext";
@@ -42,6 +43,7 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   const [appReady, setAppReady] = useState(false);
+  const [splashDone, setSplashDone] = useState(false);
 
   useEffect(() => {
     async function prepare() {
@@ -78,6 +80,9 @@ export default function RootLayout() {
               <ActivityProvider>
                 <VideoProvider>
                   <RootLayoutNav />
+                  {!splashDone && (
+                    <AnimatedSplash onFinish={() => setSplashDone(true)} />
+                  )}
                 </VideoProvider>
               </ActivityProvider>
             </KeyboardProvider>
