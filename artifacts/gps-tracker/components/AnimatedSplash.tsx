@@ -1,14 +1,8 @@
 import React, { useEffect, useRef } from "react";
-import { Animated, Dimensions, Easing, View } from "react-native";
-import Svg, {
-  Circle,
-  Path,
-  G,
-} from "react-native-svg";
+import { Animated, Dimensions, Easing } from "react-native";
+import Svg, { Circle, Path } from "react-native-svg";
 
-const { width: W, height: H } = Dimensions.get("window");
-
-const AnimatedG = Animated.createAnimatedComponent(G);
+const { width: W } = Dimensions.get("window");
 
 const ROUTE_POINTS = [
   [0.15, 0.55],
@@ -36,14 +30,12 @@ export default function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
   const logoScale = useRef(new Animated.Value(0)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const routeOpacity = useRef(new Animated.Value(0)).current;
-  const dotProgress = useRef(new Animated.Value(0)).current;
+  const endpointOpacity = useRef(new Animated.Value(0)).current;
+  const endpointScale = useRef(new Animated.Value(0)).current;
   const textOpacity = useRef(new Animated.Value(0)).current;
   const textSlide = useRef(new Animated.Value(20)).current;
   const subtitleOpacity = useRef(new Animated.Value(0)).current;
   const fadeOut = useRef(new Animated.Value(1)).current;
-
-  const pinBounce = useRef(new Animated.Value(0)).current;
-  const pulseScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.sequence([
@@ -63,44 +55,29 @@ export default function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
 
       Animated.delay(200),
 
-      Animated.parallel([
-        Animated.timing(routeOpacity, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(dotProgress, {
-          toValue: 1,
-          duration: 1200,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-      ]),
+      Animated.timing(routeOpacity, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+
+      Animated.delay(200),
 
       Animated.parallel([
-        Animated.spring(pinBounce, {
+        Animated.spring(endpointScale, {
           toValue: 1,
           damping: 8,
           stiffness: 200,
           useNativeDriver: true,
         }),
-        Animated.loop(
-          Animated.sequence([
-            Animated.timing(pulseScale, {
-              toValue: 1.6,
-              duration: 800,
-              easing: Easing.out(Easing.ease),
-              useNativeDriver: true,
-            }),
-            Animated.timing(pulseScale, {
-              toValue: 1,
-              duration: 0,
-              useNativeDriver: true,
-            }),
-          ]),
-          { iterations: 2 }
-        ),
+        Animated.timing(endpointOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
       ]),
+
+      Animated.delay(100),
 
       Animated.parallel([
         Animated.timing(textOpacity, {
@@ -137,13 +114,18 @@ export default function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
 
   const iconSize = 120;
   const routeSize = W * 0.55;
+  const routeH = routeSize * 0.65;
   const routePath = buildPath(ROUTE_POINTS, routeSize);
 
-  const startPt = { x: ROUTE_POINTS[0][0] * routeSize, y: ROUTE_POINTS[0][1] * routeSize };
+  const startPt = {
+    x: ROUTE_POINTS[0][0] * routeSize,
+    y: ROUTE_POINTS[0][1] * routeSize,
+  };
   const endPt = {
     x: ROUTE_POINTS[ROUTE_POINTS.length - 1][0] * routeSize,
     y: ROUTE_POINTS[ROUTE_POINTS.length - 1][1] * routeSize,
   };
+  const viewY = routeSize * 0.18;
 
   return (
     <Animated.View
@@ -167,48 +149,44 @@ export default function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
           marginBottom: 32,
         }}
       >
-        <View style={{ width: iconSize, height: iconSize, alignItems: "center", justifyContent: "center" }}>
-          <Svg width={iconSize} height={iconSize} viewBox="0 0 120 120">
-            <Circle cx={60} cy={60} r={56} fill="#6D9E51" />
-
-            <Path
-              d="M60 28C49.5 28 41 36.5 41 47c0 14 19 33 19 33s19-19 19-33c0-10.5-8.5-19-19-19z"
-              fill="white"
-            />
-            <Circle cx={60} cy={47} r={8} fill="#6D9E51" />
-
-            <Path
-              d="M38 75 Q49 65 60 72 Q71 79 82 69"
-              stroke="white"
-              strokeWidth={3}
-              fill="none"
-              strokeLinecap="round"
-              opacity={0.7}
-            />
-            <Path
-              d="M35 85 Q48 76 60 82 Q72 88 85 78"
-              stroke="white"
-              strokeWidth={2.5}
-              fill="none"
-              strokeLinecap="round"
-              opacity={0.4}
-            />
-          </Svg>
-        </View>
+        <Svg width={iconSize} height={iconSize} viewBox="0 0 120 120">
+          <Circle cx={60} cy={60} r={56} fill="#6D9E51" />
+          <Path
+            d="M60 28C49.5 28 41 36.5 41 47c0 14 19 33 19 33s19-19 19-33c0-10.5-8.5-19-19-19z"
+            fill="white"
+          />
+          <Circle cx={60} cy={47} r={8} fill="#6D9E51" />
+          <Path
+            d="M38 75 Q49 65 60 72 Q71 79 82 69"
+            stroke="white"
+            strokeWidth={3}
+            fill="none"
+            strokeLinecap="round"
+            opacity={0.7}
+          />
+          <Path
+            d="M35 85 Q48 76 60 82 Q72 88 85 78"
+            stroke="white"
+            strokeWidth={2.5}
+            fill="none"
+            strokeLinecap="round"
+            opacity={0.4}
+          />
+        </Svg>
       </Animated.View>
 
       <Animated.View
         style={{
           opacity: routeOpacity,
-          height: routeSize * 0.65,
           width: routeSize,
+          height: routeH,
           marginBottom: 36,
         }}
       >
         <Svg
           width={routeSize}
-          height={routeSize * 0.65}
-          viewBox={`0 ${routeSize * 0.18} ${routeSize} ${routeSize * 0.65}`}
+          height={routeH}
+          viewBox={`0 ${viewY} ${routeSize} ${routeH}`}
         >
           <Path
             d={routePath}
@@ -227,33 +205,27 @@ export default function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
             strokeLinejoin="round"
             strokeDasharray="6 5"
           />
-
           <Circle cx={startPt.x} cy={startPt.y} r={6} fill="#6D9E51" opacity={0.3} />
           <Circle cx={startPt.x} cy={startPt.y} r={4} fill="#6D9E51" />
-
-          <AnimatedG
-            style={{
-              opacity: pinBounce,
-              transform: [{ scale: pinBounce }],
-            }}
-          >
-            <Animated.View
-              style={{
-                position: "absolute",
-                left: endPt.x - 10,
-                top: endPt.y - 10,
-                width: 20,
-                height: 20,
-              }}
-            >
-              <Svg width={20} height={20} viewBox="0 0 20 20">
-                <Circle cx={10} cy={10} r={8} fill="rgba(109,158,81,0.2)" />
-                <Circle cx={10} cy={10} r={5} fill="white" />
-                <Circle cx={10} cy={10} r={3} fill="#6D9E51" />
-              </Svg>
-            </Animated.View>
-          </AnimatedG>
         </Svg>
+
+        <Animated.View
+          style={{
+            position: "absolute",
+            left: endPt.x - 12,
+            top: endPt.y - viewY - 12,
+            width: 24,
+            height: 24,
+            opacity: endpointOpacity,
+            transform: [{ scale: endpointScale }],
+          }}
+        >
+          <Svg width={24} height={24} viewBox="0 0 24 24">
+            <Circle cx={12} cy={12} r={10} fill="rgba(109,158,81,0.2)" />
+            <Circle cx={12} cy={12} r={6} fill="white" />
+            <Circle cx={12} cy={12} r={3.5} fill="#6D9E51" />
+          </Svg>
+        </Animated.View>
       </Animated.View>
 
       <Animated.Text
